@@ -54,7 +54,7 @@ export const MarketlyFAQ: React.FC<MarketlyFAQProps> = ({ onOpenContactUs }) => 
           </p>
         </div>
 
-        {/* Accordion, max-width ~700px centered, 8px gap between items */}
+        {/* Accordion component, max-width 700px centered, one item open at a time */}
         <div className="max-w-[700px] mx-auto space-y-2">
           {faqs.map((faq, index) => {
             const isOpen = openIndex === index;
@@ -70,7 +70,7 @@ export const MarketlyFAQ: React.FC<MarketlyFAQProps> = ({ onOpenContactUs }) => 
                   className="w-full p-4 sm:p-5 flex items-center justify-between text-left cursor-pointer hover:bg-slate-50/50 transition-colors"
                   aria-expanded={isOpen}
                 >
-                  {/* Navy 16px medium-weight question text */}
+                  {/* Navy 16px medium question text */}
                   <span className="text-[16px] font-medium text-[#0F2A47] pr-4 leading-snug">
                     {faq.question}
                   </span>
@@ -78,7 +78,7 @@ export const MarketlyFAQ: React.FC<MarketlyFAQProps> = ({ onOpenContactUs }) => 
                   {/* +/- toggle icon right-aligned */}
                   <div className="w-6 h-6 rounded-full bg-[#F7F8FA] flex items-center justify-center text-[#0F2A47] shrink-0 border border-[#E2E2E0]">
                     {isOpen ? (
-                      <Minus className="w-3.5 h-3.5 text-[#0D9488]" />
+                      <Minus className="w-3.5 h-3.5 text-[#1F9D74]" />
                     ) : (
                       <Plus className="w-3.5 h-3.5 text-[#6B7280]" />
                     )}
@@ -96,12 +96,12 @@ export const MarketlyFAQ: React.FC<MarketlyFAQProps> = ({ onOpenContactUs }) => 
           })}
         </div>
 
-        {/* Closing line below: "Still have a question? [Talk to us]" — Teal link */}
+        {/* Below the list, centered teal link: "Still have a question? Talk to us" */}
         <div className="text-center text-sm sm:text-base text-[#6B7280] mt-10">
           <span>Still have a question? </span>
           <button
             onClick={onOpenContactUs}
-            className="text-[#0D9488] font-medium hover:underline cursor-pointer inline-flex items-center"
+            className="text-[#1F9D74] font-medium hover:underline cursor-pointer inline-flex items-center"
           >
             Talk to us
           </button>
