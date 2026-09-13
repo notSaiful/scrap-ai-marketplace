@@ -9,31 +9,43 @@ interface WhoItsForProps {
 export const WhoItsFor: React.FC<WhoItsForProps> = ({ onOpenRFQ, onExploreCatalog }) => {
   const targetSegments = [
     {
-      title: 'Manufacturers & Smelters',
-      subtitle: 'Foundries, Induction Furnaces & Extrusion Mills',
+      title: 'Manufacturers',
+      subtitle: 'Foundries & Production Plants',
       description:
-        'Secure high-tonnage furnace-ready charges with certified spectrographic assays, consistent chemistry, and zero tramp contamination.',
+        'Get consistent, bulk scrap delivered straight to your plant with guaranteed quality and zero surprises on arrival.',
       icon: Factory,
-      highlight: 'Direct Melt-Ready Charge',
-      benefits: ['XRF-certified metallurgical purity', 'Reliable monthly contracted volume', 'Weighbridge & assay backed guarantee'],
+      highlight: 'Direct Delivery',
+      benefits: [
+        'Guaranteed material grade & weight',
+        'Predictable, scheduled bulk supply',
+        'Direct mill delivery with full paperwork',
+      ],
     },
     {
-      title: 'Scrap & Commodity Traders',
-      subtitle: 'Importers, Exporters & Regional Stockists',
+      title: 'Traders',
+      subtitle: 'Stockists & Regional Dealers',
       description:
-        'Lock transparent benchmark pricing and institutional container lots with full logistics milestones from load port to destination CFS gate.',
+        'Access reliable inventory with transparent pricing, clear material photos, and complete tracking from loading to delivery.',
       icon: TrendingUp,
-      highlight: 'Global Arbitrage & CIF Logistics',
-      benefits: ['Transparent per-ton benchmark rates', 'Multi-seal GPS container tracking', 'Razorpay & LC Escrow protection'],
+      highlight: 'Transparent Pricing',
+      benefits: [
+        'Clear, fixed upfront prices per ton',
+        'Live transit & truck dispatch tracking',
+        'Safe, protected payment terms',
+      ],
     },
     {
-      title: 'Recyclers & Processors',
-      subtitle: 'Granulators, Shredders & Pelletizers',
+      title: 'Processors',
+      subtitle: 'Shredders & Recyclers',
       description:
-        'Source segregated raw bales and sorted industrial regrinds with verifiable moisture limits, density ratings, and low prohibitive limits.',
+        'Source clean, segregated materials ready for immediate processing so your machinery runs without downtime or sorting delays.',
       icon: Cpu,
-      highlight: 'Clean Segregated Feedstock',
-      benefits: ['Zero sorting guesswork', 'Strict ISRI grading compliance', 'Rapid RFQ turnaround within 4 hours'],
+      highlight: 'Sorted Materials',
+      benefits: [
+        'Clean, pre-inspected bulk lots',
+        'No foreign contaminants or bad loads',
+        'Fast quotes and quick order turnaround',
+      ],
     },
   ];
 
@@ -107,7 +119,7 @@ export const WhoItsFor: React.FC<WhoItsForProps> = ({ onOpenRFQ, onExploreCatalo
                   onClick={onOpenRFQ}
                   className="w-full mt-2 py-2.5 px-4 rounded-xl bg-slate-50 hover:bg-[#0284c7] hover:text-white text-slate-800 text-xs font-semibold flex items-center justify-center gap-1.5 transition-all group/btn cursor-pointer"
                 >
-                  <span>Request Allocation</span>
+                  <span>Get a Quote</span>
                   <ArrowRight className="w-3.5 h-3.5 group-hover/btn:translate-x-1 transition-transform" />
                 </button>
               </div>
