@@ -1,22 +1,19 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { 
-  Layers, 
-  Sparkles, 
   SlidersHorizontal, 
   RefreshCw, 
   Filter, 
   ArrowLeft, 
   Search, 
-  X,
-  ShieldCheck,
-  Camera,
-  ImageIcon
+  X, 
+  ShieldCheck, 
+  Camera, 
+  MapPin, 
+  Layers
 } from 'lucide-react';
 import { ScrapItem } from '../types/scrap';
 import { ScrapRagResult } from '../types/rag';
 import { CATEGORIES } from '../data/scrapData';
-import { ScrapCard } from './ScrapCard';
-import { CategorySidebar } from './CategorySidebar';
 import { AIRagRecommendationPanel } from './AIRagRecommendationPanel';
 
 interface CategoriesPageProps {
@@ -56,165 +53,352 @@ export const CategoriesPage: React.FC<CategoriesPageProps> = ({
   onOpenAdvisorModal,
   onOpenImageMatch,
 }) => {
-  const [isSearchFocused, setIsSearchFocused] = useState(false);
+  // Local Category Filter States
+  const [categorySearch, setCategorySearch] = useState('');
+  const [maxPrice, setMaxPrice] = useState<number>(100000);
+  const [selectedLocation, setSelectedLocation] = useState<string>('all');
+  const [selectedQuantityRange, setSelectedQuantityRange] = useState<string>('all');
+  const [mobileFilterOpen, setMobileFilterOpen] = useState(false);
 
   const currentCategoryInfo = CATEGORIES.find(c => c.id === activeCategory) || CATEGORIES[0];
 
+  const handleResetFilters = () => {
+    setMaxPrice(100000);
+    setSelectedLocation('all');
+    setSelectedQuantityRange('all');
+    setCategorySearch('');
+    setSearchQuery('');
+  };
+
+  const locations = [
+    { id: 'all', name: 'All Delivery Locations' },
+    { id: 'bengaluru', name: 'Bengaluru / Karnataka' },
+    { id: 'mumbai', name: 'Mumbai / Maharashtra' },
+    { id: 'delhi', name: 'Delhi NCR / Haryana' },
+    { id: 'chennai', name: 'Chennai / Tamil Nadu' },
+    { id: 'hyderabad', name: 'Hyderabad / Telangana' },
+    { id: 'kolkata', name: 'Kolkata / West Bengal' },
+  ];
+
+  // Client-side multi-factor filtering based on Alibaba filters
+  const displayedItems = useMemo(() => {
+    return filteredScraps.filter(item => {
+      // 1. Search within category
+      if (categorySearch.trim()) {
+        const query = categorySearch.toLowerCase().trim();
+        const content = `${item.title} ${item.subtitle} ${item.categoryName} ${item.origin}`.toLowerCase();
+        if (!content.includes(query)) return false;
+      }
+
+      // 2. Price slider (converted to INR estimate)
+      const inrPrice = item.pricePerTon > 1000 ? Math.round(item.pricePerTon * 83) : Math.round(item.pricePerTon * 85);
+      if (inrPrice > maxPrice) return false;
+
+      // 3. Delivery location
+      if (selectedLocation !== 'all') {
+        const locLower = item.origin.toLowerCase();
+        if (selectedLocation === 'bengaluru' && !locLower.includes('bengaluru') && !locLower.includes('karnataka') && !locLower.includes('south')) return false;
+        if (selectedLocation === 'mumbai' && !locLower.includes('mumbai') && !locLower.includes('maharashtra') && !locLower.includes('nhava') && !locLower.includes('west')) return false;
+        if (selectedLocation === 'delhi' && !locLower.includes('delhi') && !locLower.includes('haryana') && !locLower.includes('north')) return false;
+        if (selectedLocation === 'chennai' && !locLower.includes('chennai') && !locLower.includes('tamil') && !locLower.includes('ennore')) return false;
+        if (selectedLocation === 'hyderabad' && !locLower.includes('hyderabad') && !locLower.includes('telangana')) return false;
+        if (selectedLocation === 'kolkata' && !locLower.includes('kolkata') && !locLower.includes('bengal') && !locLower.includes('east') && !locLower.includes('jamshedpur')) return false;
+      }
+
+      // 4. Quantity Range
+      if (selectedQuantityRange !== 'all') {
+        if (selectedQuantityRange === '<10' && item.moq > 10) return false;
+        if (selectedQuantityRange === '10-25' && (item.moq < 10 || item.moq > 25)) return false;
+        if (selectedQuantityRange === '25-50' && (item.moq < 25 || item.moq > 50)) return false;
+        if (selectedQuantityRange === '50+' && item.moq < 50) return false;
+      }
+
+      return true;
+    });
+  }, [filteredScraps, categorySearch, maxPrice, selectedLocation, selectedQuantityRange]);
+
   return (
-    <div className="min-h-screen bg-[#f8f9fa] pt-24 sm:pt-28 pb-20">
+    <div className="min-h-screen bg-[#F7F8FA] pt-24 sm:pt-28 pb-24 text-slate-900">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
-        {/* Breadcrumb Bar */}
-        <div className="flex items-center justify-between gap-3 text-xs mb-6 text-[#86868b]">
+        {/* Breadcrumb Header */}
+        <div className="flex flex-wrap items-center justify-between gap-3 text-xs mb-6 text-slate-500">
           <div className="flex items-center space-x-2">
             <button
               onClick={onGoHome}
-              className="flex items-center space-x-1.5 font-bold text-[#0f1115] hover:text-[#0284c7] bg-white border border-black/[0.08] px-3.5 py-1.5 rounded-full shadow-2xs transition-all active:scale-[0.98] cursor-pointer"
+              className="flex items-center space-x-1.5 font-bold text-[#0f1115] hover:text-[#0ea5e9] bg-white border border-slate-200 px-3.5 py-1.5 rounded-full shadow-2xs transition-all active:scale-[0.98] cursor-pointer"
             >
-              <ArrowLeft className="w-3.5 h-3.5 text-[#0284c7]" />
+              <ArrowLeft className="w-3.5 h-3.5 text-[#0ea5e9]" />
               <span>Back to Home</span>
             </button>
             <span>/</span>
             <button
-              onClick={() => setActiveCategory('all')}
-              className="hover:text-[#0f1115] font-medium cursor-pointer"
+              onClick={() => { setActiveCategory('all'); handleResetFilters(); }}
+              className="hover:underline hover:text-slate-900 font-medium cursor-pointer"
             >
-              Categories
+              All Categories
             </button>
             {activeCategory !== 'all' && (
               <>
                 <span>/</span>
-                <span className="font-semibold text-[#0f1115]">{currentCategoryInfo.name}</span>
+                <span className="font-semibold text-slate-900">{currentCategoryInfo.name}</span>
               </>
             )}
           </div>
 
-          <div className="hidden sm:flex items-center space-x-2 text-[11px] font-semibold text-[#0284c7] bg-sky-50 border border-sky-200 px-3 py-1 rounded-full">
-            <ShieldCheck className="w-3.5 h-3.5" />
-            <span>100% Escrow Protected Trade</span>
+          <div className="hidden sm:flex items-center space-x-2 text-[11px] font-semibold text-[#0ea5e9] bg-sky-50 border border-sky-200 px-3.5 py-1 rounded-full">
+            <ShieldCheck className="w-3.5 h-3.5 text-[#0ea5e9]" />
+            <span>Alibaba B2B Verified Wholesale Catalog</span>
           </div>
         </div>
 
-        {/* AI Search Bar Section (Replacing the removed card) */}
-        <div className="mb-8 sm:mb-10 text-center">
-          <div 
-            className={`relative bg-white rounded-2xl sm:rounded-full border transition-all duration-300 max-w-3xl mx-auto text-left ${
-              isSearchFocused 
-                ? 'border-[#38bdf8] ring-4 ring-[#38bdf8]/20 shadow-[0_24px_50px_-10px_rgba(14,165,233,0.25)]' 
-                : 'border-black/[0.08] hover:border-black/[0.18] shadow-[0_12px_35px_rgba(0,0,0,0.06)]'
-            }`}
+        {/* Category Header Banner */}
+        <div className="bg-white rounded-2xl border border-slate-200 p-5 sm:p-6 mb-6 shadow-2xs flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-bold text-[#0ea5e9] uppercase tracking-wider bg-sky-50 px-2.5 py-0.5 rounded-full border border-sky-100">
+                Bulk Wholesale Supply
+              </span>
+              <span className="text-xs text-slate-400">
+                {displayedItems.length} Available Lots
+              </span>
+            </div>
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-[#0f1115] mt-1">
+              {activeCategory === 'all' ? 'Industrial Bulk Materials & Scrap Supply' : currentCategoryInfo.name}
+            </h1>
+            <p className="text-xs sm:text-sm text-slate-500 mt-1 max-w-2xl">
+              Dense wholesale inventory sourced directly from verified industrial suppliers and processors. Transparent per-ton pricing with escrow delivery protection.
+            </p>
+          </div>
+
+          {/* Quick Action Buttons */}
+          <div className="flex items-center gap-2.5">
+            {onOpenImageMatch && (
+              <button
+                onClick={onOpenImageMatch}
+                className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-slate-700 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl transition-all cursor-pointer shadow-2xs"
+              >
+                <Camera className="w-4 h-4 text-[#0ea5e9]" />
+                <span>Photo Match</span>
+              </button>
+            )}
+            <button
+              onClick={() => onOpenRFQ()}
+              className="bg-[#0ea5e9] hover:bg-[#0284c7] text-white px-4 py-2 rounded-xl text-xs font-semibold transition-all shadow-2xs cursor-pointer flex items-center gap-1.5"
+            >
+              <span>Request Quote</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Mobile Filter Drawer Toggle Button */}
+        <div className="lg:hidden mb-4 flex items-center justify-between">
+          <button
+            onClick={() => setMobileFilterOpen(!mobileFilterOpen)}
+            className="w-full bg-white border border-slate-200 py-2.5 px-4 rounded-xl text-xs font-semibold text-slate-800 flex items-center justify-center gap-2 shadow-2xs"
           >
-            <div className="flex flex-col sm:flex-row items-center p-1.5 sm:p-2">
+            <Filter className="w-4 h-4 text-[#0ea5e9]" />
+            <span>{mobileFilterOpen ? 'Hide Filters' : 'Filter Products (Price, Location, Quantity)'}</span>
+          </button>
+        </div>
+
+        {/* ======================================================================= */}
+        {/* MAIN ALIBABA 2-COLUMN LAYOUT (Left Filters Sidebar + Right Grid)        */}
+        {/* ======================================================================= */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+          
+          {/* ===================================================================== */}
+          {/* LEFT SIDEBAR FILTERS (Sticky on desktop, collapsable on mobile)       */}
+          {/* ===================================================================== */}
+          <aside className={`lg:col-span-3 lg:sticky lg:top-24 space-y-4 ${mobileFilterOpen ? 'block' : 'hidden lg:block'}`}>
+            
+            <div className="bg-white rounded-2xl border border-slate-200 shadow-2xs p-5 space-y-6">
               
-              {/* Input Element */}
-              <div className="flex items-center flex-1 w-full px-4 py-2">
-                <Search className="w-5 h-5 text-[#919eab] mr-3 shrink-0" />
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  onFocus={() => setIsSearchFocused(true)}
-                  onBlur={() => setIsSearchFocused(false)}
-                  placeholder="Search scrap lot, grade, or price (e.g. 'Copper under $7800', 'HMS steel')..."
-                  className="w-full text-[#0f1115] placeholder-[#919eab] focus:outline-none text-xs sm:text-sm font-medium bg-transparent"
-                />
-                {searchQuery && (
-                  <button 
-                    onClick={() => setSearchQuery('')} 
-                    className="p-1 text-[#919eab] hover:text-[#0f1115] transition-colors cursor-pointer"
-                    title="Clear input"
+              {/* Filter Header with Reset */}
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+                <div className="flex items-center gap-2">
+                  <Filter className="w-4 h-4 text-[#0ea5e9]" />
+                  <h3 className="font-bold text-slate-900 text-sm">Filters</h3>
+                </div>
+                {(maxPrice < 100000 || selectedLocation !== 'all' || selectedQuantityRange !== 'all' || categorySearch) && (
+                  <button
+                    onClick={handleResetFilters}
+                    className="text-xs text-[#0ea5e9] hover:underline font-semibold flex items-center gap-1 cursor-pointer"
                   >
-                    <X className="w-4 h-4" />
+                    <RefreshCw className="w-3 h-3" />
+                    <span>Reset</span>
                   </button>
                 )}
               </div>
 
-              {/* Divider and Actions */}
-              <div className="flex items-center justify-between w-full sm:w-auto px-2 sm:px-0 space-x-2 border-t sm:border-t-0 border-black/[0.06] pt-2 sm:pt-0">
-                
-                {/* Image Search Button */}
-                <button
-                  type="button"
-                  onClick={() => onOpenImageMatch?.()}
-                  className="flex items-center space-x-1.5 px-3.5 py-2 text-xs font-medium text-[#495057] hover:text-[#0f1115] hover:bg-black/[0.05] rounded-full transition-all active:scale-[0.98] cursor-pointer"
-                  title="Search scraps using AI image recognition"
-                >
-                  <Camera className="w-4 h-4 text-[#0ea5e9]" />
-                  <span className="hidden md:inline">Image Match</span>
-                </button>
-
-                {/* Primary Search Button */}
-                <button
-                  type="button"
-                  onClick={() => {
-                    const q = searchQuery.trim() || 'Copper millberry 99.99%';
-                    if (!searchQuery.trim()) {
-                      setSearchQuery(q);
-                    }
-                  }}
-                  className="bg-gradient-to-r from-[#38bdf8] via-[#0ea5e9] to-[#0284c7] hover:from-[#0ea5e9] hover:to-[#0369a1] text-white shadow-[0_4px_16px_rgba(14,165,233,0.35)] flex-1 sm:flex-none flex items-center justify-center space-x-1.5 px-6 sm:px-7 py-2.5 text-xs font-semibold rounded-full transition-all active:scale-[0.98] cursor-pointer"
-                >
-                  <Search className="w-3.5 h-3.5" />
-                  <span>Search</span>
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Main 2-Column Catalog Grid (Category Filter Sidebar + Listings) */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-          
-          {/* Left Column: Category Filter Sidebar (3 cols) */}
-          <div className="lg:col-span-3 sticky top-24 space-y-4">
-            <CategorySidebar
-              selectedCategory={activeCategory}
-              onSelectCategory={(catId) => setActiveCategory(catId)}
-            />
-          </div>
-
-          {/* Right Column: Listings & Controls (9 cols) */}
-          <div className="lg:col-span-9 space-y-6">
-            
-            {/* Top Toolbar: Status Filters, Sort, and Count */}
-            <div className="bg-white rounded-2xl border border-black/[0.08] p-3 sm:p-4 shadow-2xs flex flex-wrap items-center justify-between gap-3">
-              {/* Status Filter Pills */}
-              <div className="flex items-center space-x-1.5 overflow-x-auto">
-                {(['all', 'trending', 'featured', 'recent'] as const).map((filterVal) => (
+              {/* Material Categories Quick Selector */}
+              <div>
+                <label className="text-xs font-bold text-slate-700 uppercase tracking-wider mb-2.5 block">
+                  Material Categories
+                </label>
+                <div className="space-y-1 max-h-52 overflow-y-auto pr-1">
                   <button
-                    key={filterVal}
-                    onClick={() => setStatusFilter(filterVal)}
-                    className={`text-xs font-semibold px-3 py-1.5 rounded-full capitalize transition-all cursor-pointer ${
-                      statusFilter === filterVal
-                        ? 'bg-gradient-to-r from-[#38bdf8] via-[#0ea5e9] to-[#0284c7] text-white shadow-2xs'
-                        : 'text-[#495057] hover:text-[#0f1115] hover:bg-[#f1f3f5]'
+                    onClick={() => setActiveCategory('all')}
+                    className={`w-full text-left px-2.5 py-1.5 rounded-lg text-xs font-medium flex items-center justify-between transition-colors ${
+                      activeCategory === 'all'
+                        ? 'bg-sky-50 text-[#0ea5e9] font-bold'
+                        : 'text-slate-600 hover:bg-slate-50'
                     }`}
                   >
-                    {filterVal === 'all' ? 'All Lots' : filterVal === 'recent' ? 'Fresh Assay' : filterVal}
+                    <span>All Materials</span>
+                    <span className="text-[10px] text-slate-400">Total</span>
                   </button>
-                ))}
+                  {CATEGORIES.map(cat => (
+                    <button
+                      key={cat.id}
+                      onClick={() => setActiveCategory(cat.id)}
+                      className={`w-full text-left px-2.5 py-1.5 rounded-lg text-xs font-medium flex items-center justify-between transition-colors ${
+                        activeCategory === cat.id
+                          ? 'bg-sky-50 text-[#0ea5e9] font-bold'
+                          : 'text-slate-600 hover:bg-slate-50'
+                      }`}
+                    >
+                      <span className="truncate">{cat.name}</span>
+                      <span className="text-[10px] text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded">
+                        {cat.count}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* 1. Price Range (Slider) */}
+              <div className="pt-4 border-t border-slate-100">
+                <div className="flex items-center justify-between mb-2">
+                  <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">
+                    Price Range (Max)
+                  </label>
+                  <span className="text-xs font-bold text-[#0ea5e9]">
+                    ₹{maxPrice.toLocaleString('en-IN')}/ton
+                  </span>
+                </div>
+                <input
+                  type="range"
+                  min={15000}
+                  max={100000}
+                  step={2000}
+                  value={maxPrice}
+                  onChange={(e) => setMaxPrice(Number(e.target.value))}
+                  className="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-[#0ea5e9]"
+                />
+                <div className="flex justify-between text-[10px] text-slate-400 mt-1">
+                  <span>₹15,000</span>
+                  <span>₹50,000</span>
+                  <span>₹1,00,000</span>
+                </div>
+              </div>
+
+              {/* 2. Delivery Location */}
+              <div className="pt-4 border-t border-slate-100">
+                <label className="text-xs font-bold text-slate-700 uppercase tracking-wider mb-2 block flex items-center gap-1">
+                  <MapPin className="w-3.5 h-3.5 text-[#0ea5e9]" />
+                  <span>Delivery Location</span>
+                </label>
+                <select
+                  value={selectedLocation}
+                  onChange={(e) => setSelectedLocation(e.target.value)}
+                  className="w-full text-xs bg-slate-50 border border-slate-200 text-slate-800 rounded-xl p-2.5 focus:outline-none focus:border-[#0ea5e9] cursor-pointer"
+                >
+                  {locations.map(loc => (
+                    <option key={loc.id} value={loc.id}>{loc.name}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* 3. Quantity / MOQ Range */}
+              <div className="pt-4 border-t border-slate-100">
+                <label className="text-xs font-bold text-slate-700 uppercase tracking-wider mb-2 block">
+                  Quantity Range (MOQ)
+                </label>
+                <div className="grid grid-cols-2 gap-2">
+                  {[
+                    { id: 'all', label: 'All MOQs' },
+                    { id: '<10', label: '< 10 MT' },
+                    { id: '10-25', label: '10–25 MT' },
+                    { id: '50+', label: '50+ MT' },
+                  ].map(qty => (
+                    <button
+                      key={qty.id}
+                      type="button"
+                      onClick={() => setSelectedQuantityRange(qty.id)}
+                      className={`text-xs py-1.5 px-2 rounded-lg border font-medium transition-all text-center cursor-pointer ${
+                        selectedQuantityRange === qty.id
+                          ? 'bg-[#0ea5e9] text-white border-[#0ea5e9] shadow-2xs font-semibold'
+                          : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
+                      }`}
+                    >
+                      {qty.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+            </div>
+
+            {/* Alibaba Trust Card */}
+            <div className="bg-sky-50/60 rounded-2xl border border-sky-100 p-4 text-xs text-slate-600 space-y-2">
+              <div className="font-bold text-slate-900 flex items-center gap-1.5">
+                <ShieldCheck className="w-4 h-4 text-[#0ea5e9]" />
+                <span>Trade Assurance</span>
+              </div>
+              <p className="text-[11px] text-slate-500 leading-relaxed">
+                Protected transactions with escrow release only after destination weighbridge verification.
+              </p>
+            </div>
+
+          </aside>
+
+          {/* ===================================================================== */}
+          {/* RIGHT COLUMN: TOP BAR + DENSE ALIBABA GRID CARDS                      */}
+          {/* ===================================================================== */}
+          <main className="lg:col-span-9 space-y-5">
+            
+            {/* Top Bar: Search-within-category field + Sort Dropdown */}
+            <div className="bg-white rounded-2xl border border-slate-200 p-3.5 sm:p-4 shadow-2xs flex flex-col sm:flex-row items-center justify-between gap-3">
+              
+              {/* Search-Within-Category Field */}
+              <div className="relative w-full sm:max-w-md">
+                <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                <input
+                  type="text"
+                  value={categorySearch}
+                  onChange={(e) => setCategorySearch(e.target.value)}
+                  placeholder="Search within this category (e.g. 'Copper', 'Steel', 'Plastic')..."
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-9 pr-8 py-2 text-xs font-medium text-slate-900 placeholder-slate-400 focus:outline-none focus:border-[#0ea5e9] focus:bg-white transition-all"
+                />
+                {categorySearch && (
+                  <button
+                    onClick={() => setCategorySearch('')}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                )}
               </div>
 
               {/* Sort Dropdown */}
-              <div className="flex items-center space-x-2">
-                <span className="text-xs text-[#86868b] flex items-center gap-1 font-medium">
-                  <SlidersHorizontal className="w-3.5 h-3.5" />
-                  <span>Sort:</span>
+              <div className="flex items-center justify-between w-full sm:w-auto gap-3">
+                <span className="text-xs text-slate-400 hidden md:inline">
+                  Sort:
                 </span>
                 <select
                   value={sortBy}
                   onChange={(e) => setSortBy(e.target.value as any)}
-                  className="text-xs font-semibold bg-[#f8f9fa] border border-black/[0.08] text-[#0f1115] rounded-xl px-3 py-1.5 focus:outline-none focus:border-[#38bdf8] cursor-pointer"
+                  className="w-full sm:w-auto bg-slate-50 border border-slate-200 text-xs font-semibold text-slate-800 rounded-xl px-3 py-2 focus:outline-none focus:border-[#0ea5e9] cursor-pointer"
                 >
-                  <option value="featured">Featured First</option>
+                  <option value="featured">Most Requested</option>
                   <option value="price-asc">Price: Low to High</option>
                   <option value="price-desc">Price: High to Low</option>
-                  <option value="purity">Highest AI Purity</option>
                 </select>
               </div>
             </div>
 
-            {/* AI RAG Recommendation Engine Banner (Active when search exists) */}
+            {/* AI RAG Recommendation Panel (if active search query exists) */}
             {ragBrief && (
               <AIRagRecommendationPanel
                 brief={ragBrief}
@@ -226,44 +410,108 @@ export const CategoriesPage: React.FC<CategoriesPageProps> = ({
               />
             )}
 
-            {/* Scrap Items Card Grid */}
-            {filteredScraps.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                {filteredScraps.map((item) => (
-                  <ScrapCard
-                    key={item.id}
-                    item={item}
-                    ragResult={ragResultsMap.get(item.id)}
-                    onSelect={(selected) => onSelectScrapItem(selected)}
-                    onQuickRFQ={(target) => onOpenRFQ(target)}
-                  />
-                ))}
+            {/* =================================================================== */}
+            {/* DENSE ALIBABA GRID CARDS (3–4 columns desktop, 1 column mobile)     */}
+            {/* White cards, 8px radius, subtle border, hover lift & shadow         */}
+            {/* =================================================================== */}
+            {displayedItems.length > 0 ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-4.5">
+                {displayedItems.map((item) => {
+                  const inrRate = item.pricePerTon > 1000 ? Math.round(item.pricePerTon * 83) : Math.round(item.pricePerTon * 85);
+                  const minPrice = Math.round(inrRate * 0.95);
+                  const maxPrice = Math.round(inrRate * 1.05);
+
+                  return (
+                    <div
+                      key={item.id}
+                      onClick={() => onSelectScrapItem(item)}
+                      className="group bg-white rounded-[8px] border border-slate-200/90 hover:border-[#0ea5e9]/50 shadow-xs hover:shadow-[0_12px_28px_rgba(14,165,233,0.12)] hover:-translate-y-1 transition-all duration-200 overflow-hidden flex flex-col justify-between cursor-pointer"
+                    >
+                      <div>
+                        {/* Thumbnail Image Container (16:10 ratio) */}
+                        <div className="relative w-full aspect-[16/10] bg-slate-100 overflow-hidden border-b border-slate-100">
+                          <img
+                            src={item.primaryImage}
+                            alt={item.title}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                            loading="lazy"
+                          />
+
+                          {/* Origin location badge */}
+                          <div className="absolute bottom-2 left-2 bg-black/60 backdrop-blur-md text-white text-[10px] px-2 py-0.5 rounded">
+                            {item.origin.split(',')[0]}
+                          </div>
+                        </div>
+
+                        {/* Card Body Details */}
+                        <div className="p-3.5 space-y-2">
+                          {/* Material Name */}
+                          <h3 className="font-bold text-sm text-[#0f1115] leading-snug line-clamp-1 group-hover:text-[#0ea5e9] transition-colors">
+                            {item.title}
+                          </h3>
+
+                          {/* Indicative Price Range */}
+                          <div>
+                            <div className="text-[15px] font-bold text-[#0f1115]">
+                              ₹{minPrice.toLocaleString('en-IN')} – ₹{maxPrice.toLocaleString('en-IN')}
+                              <span className="text-[11px] font-normal text-slate-500"> / ton</span>
+                            </div>
+                            <div className="text-[10px] text-slate-400">
+                              (indicative price)
+                            </div>
+                          </div>
+
+                          {/* MOQ Line */}
+                          <div className="flex items-center justify-between text-xs pt-1 border-t border-slate-100 text-slate-600">
+                            <span className="font-semibold text-slate-700">
+                              MOQ: {item.moq} tons
+                            </span>
+                            <span className="text-[11px] text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded font-medium">
+                              Stock: {item.availableStock} MT
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Card Action Footer: Request Quote Button */}
+                      <div className="p-3.5 pt-0">
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onOpenRFQ(item);
+                          }}
+                          className="w-full bg-[#0ea5e9] hover:bg-[#0284c7] text-white text-xs font-semibold py-2 px-3 rounded-[6px] transition-all shadow-2xs active:scale-98 cursor-pointer flex items-center justify-center gap-1.5"
+                        >
+                          <span>Request Quote</span>
+                        </button>
+                      </div>
+
+                    </div>
+                  );
+                })}
               </div>
             ) : (
-              /* Empty State */
-              <div className="text-center py-16 px-4 bg-white rounded-3xl border border-black/[0.06] shadow-2xs">
-                <div className="w-14 h-14 bg-sky-50 text-[#0284c7] rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Filter className="w-6 h-6" />
+              /* Empty Search / Filter State */
+              <div className="text-center py-16 px-4 bg-white rounded-2xl border border-slate-200 shadow-2xs">
+                <div className="w-12 h-12 bg-sky-50 text-[#0ea5e9] rounded-full flex items-center justify-center mx-auto mb-3">
+                  <Filter className="w-5 h-5" />
                 </div>
-                <h3 className="text-base font-bold text-[#0f1115]">No scrap lots match your criteria</h3>
-                <p className="text-xs text-[#495057] mt-1 max-w-sm mx-auto">
-                  Try clearing search filters or choosing a different category like Non-Ferrous Metals or Heavy Steel.
+                <h3 className="text-base font-bold text-slate-900">No materials match your filter criteria</h3>
+                <p className="text-xs text-slate-500 mt-1 max-w-sm mx-auto">
+                  Try clearing the price slider or adjusting your delivery location filter.
                 </p>
                 <button
-                  onClick={() => {
-                    setSearchQuery('');
-                    setActiveCategory('all');
-                    setStatusFilter('all');
-                  }}
-                  className="mt-5 bg-gradient-to-r from-[#38bdf8] via-[#0ea5e9] to-[#0284c7] text-white text-xs font-semibold px-5 py-2.5 rounded-full inline-flex items-center gap-1.5 transition-all shadow-xs cursor-pointer active:scale-98"
+                  onClick={handleResetFilters}
+                  className="mt-4 bg-[#0ea5e9] hover:bg-[#0284c7] text-white text-xs font-semibold px-4 py-2 rounded-xl transition-all shadow-2xs cursor-pointer inline-flex items-center gap-1.5"
                 >
-                  <RefreshCw className="w-3.5 h-3.5" />
-                  <span>Reset All Filters</span>
+                  <RefreshCw className="w-3 h-3" />
+                  <span>Clear All Filters</span>
                 </button>
               </div>
             )}
 
-          </div>
+          </main>
 
         </div>
 

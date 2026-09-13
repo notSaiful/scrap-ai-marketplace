@@ -318,16 +318,43 @@ export const QuotesPage: React.FC<QuotesPageProps> = ({
   const isStageOfferOrHigher = activeQuote.status === 'offer_ready' || activeQuote.status === 'confirmed' || activeQuote.status === 'in_transit' || activeQuote.status === 'delivered';
   const isStageConfirmedOrHigher = activeQuote.status === 'confirmed' || activeQuote.status === 'in_transit' || activeQuote.status === 'delivered';
 
+  const unitPrice = activeQuote.offer?.pricePerTon || 41500;
+  const subtotal = unitPrice * activeQuote.quantityTons;
+  const gstEstimated = Math.round(subtotal * 0.18);
+  const totalAmount = subtotal + gstEstimated;
+
+  const timelineSteps = [
+    { id: 'quote_received', label: 'Quote Received', icon: Clock, time: activeQuote.requestDate },
+    { id: 'sourcing', label: 'Sourcing', icon: Search, time: 'Sep 13, 10:15 AM' },
+    { id: 'offer_ready', label: 'Offer Ready', icon: FileText, time: 'Sep 13, 01:20 PM' },
+    { id: 'confirmed', label: 'Confirmed', icon: CheckCircle2, time: 'Sep 13, 02:40 PM' },
+    { id: 'in_transit', label: 'In Transit', icon: Truck, time: 'Pending dispatch' },
+    { id: 'delivered', label: 'Delivered', icon: PackageCheck, time: 'Estimated 3 days' },
+  ];
+
+  const getStepIndex = (status: BuyerQuoteEnquiry['status']) => {
+    switch (status) {
+      case 'quote_received': return 0;
+      case 'sourcing': return 1;
+      case 'offer_ready': return 2;
+      case 'confirmed': return 3;
+      case 'in_transit': return 4;
+      case 'delivered': return 5;
+      default: return 0;
+    }
+  };
+
+  const currentStepIdx = getStepIndex(activeQuote.status);
+
   return (
     <div className="min-h-screen bg-[#F7F8FA] pt-24 sm:pt-28 pb-32 text-slate-900 selection:bg-sky-500/15 selection:text-[#0284c7]">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 space-y-6">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
 
         {/* ======================================================================= */}
         {/* 1. PAGE HEADER (Persistent Across All Stages)                           */}
         {/* ======================================================================= */}
-        <div className="sticky top-20 z-20 bg-[#F7F8FA]/90 backdrop-blur-md py-3 border-b border-black/[0.05] flex items-center justify-between gap-4">
-          
-          {/* Breadcrumb: "My Quotes / Steel Scrap Quote #WM-1042" */}
+        <div className="bg-white rounded-2xl border border-slate-200 p-4 sm:p-5 shadow-2xs flex flex-wrap items-center justify-between gap-4">
+          {/* Breadcrumb */}
           <div className="flex items-center space-x-2 text-[13px] text-slate-500 min-w-0">
             <button
               onClick={() => setActiveQuoteId(null)}
@@ -342,355 +369,342 @@ export const QuotesPage: React.FC<QuotesPageProps> = ({
           </div>
 
           {/* Persistent Actions & Live Status Pill */}
-          <div className="flex items-center space-x-2 shrink-0">
-            {/* Share with colleague icon button */}
+          <div className="flex items-center space-x-2.5 shrink-0">
             <button
               onClick={() => setShareModalOpen(true)}
-              className="p-2 rounded-full bg-white border border-slate-200 text-slate-600 hover:text-black hover:bg-slate-50 transition-all active:scale-95 cursor-pointer shadow-2xs"
+              className="p-2 rounded-xl bg-slate-50 border border-slate-200 text-slate-600 hover:text-black hover:bg-slate-100 transition-all active:scale-95 cursor-pointer shadow-2xs"
               title="Share with a colleague"
             >
               <Share2 className="w-4 h-4" />
             </button>
-
-            {/* Live Status Pill pinned near top */}
             {getStatusPill(activeQuote.status)}
           </div>
         </div>
 
         {/* ======================================================================= */}
-        {/* 2. STAGE 1 — REQUEST (Collapses to Summary Card)                       */}
+        {/* 2. HORIZONTAL STEP TRACKER (DESKTOP) / VERTICAL (MOBILE)                */}
+        {/* Quote Received → Sourcing → Offer Ready → Confirmed → In Transit → Delivered */}
         {/* ======================================================================= */}
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-2xs overflow-hidden transition-all">
-          <div className="p-4 sm:p-5 flex items-center justify-between gap-4">
-            <div>
-              <div className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-0.5">
-                Quote Request Summary
-              </div>
-              {/* Collapsed format: "Requested: 5 tons Steel Scrap, Grade A · Bengaluru · Sep 13" */}
-              <div className="text-sm sm:text-base font-bold text-[#0f1115]">
-                Requested: {activeQuote.quantityTons} tons {activeQuote.materialName}, {activeQuote.grade} · {activeQuote.deliveryLocation} · {activeQuote.requestDate}
-              </div>
-              {/* Small link: "Edit request" (only available before sourcing begins) */}
-              {activeQuote.status === 'quote_received' && (
-                <button
-                  onClick={() => onOpenNewRFQ(activeQuote.materialName)}
-                  className="text-xs text-[#0ea5e9] hover:underline mt-1 font-medium cursor-pointer"
-                >
-                  Edit request
-                </button>
-              )}
-            </div>
+        <div className="bg-white rounded-2xl border border-slate-200 p-5 sm:p-6 shadow-2xs">
+          {/* Desktop Horizontal Tracker */}
+          <div className="hidden md:flex items-center justify-between relative">
+            <div className="absolute top-5 left-8 right-8 h-0.5 bg-slate-200 -z-0" />
+            <div
+              className="absolute top-5 left-8 h-0.5 bg-[#0ea5e9] transition-all duration-500 -z-0"
+              style={{ width: `${(currentStepIdx / (timelineSteps.length - 1)) * 100}%` }}
+            />
 
-            {/* Collapse / Expand details button */}
-            <button
-              onClick={() => setRequestDetailsExpanded(!requestDetailsExpanded)}
-              className="p-2 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer shrink-0"
-              title={requestDetailsExpanded ? 'Collapse' : 'Expand full request details'}
-            >
-              {requestDetailsExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-            </button>
+            {timelineSteps.map((step, idx) => {
+              const Icon = step.icon;
+              const isPassed = idx < currentStepIdx;
+              const isCurrent = idx === currentStepIdx;
+
+              return (
+                <div key={step.id} className="relative z-10 flex flex-col items-center text-center">
+                  <div
+                    className={`w-10 h-10 rounded-full flex items-center justify-center border-2 transition-all ${
+                      isPassed
+                        ? 'bg-[#0ea5e9] border-[#0ea5e9] text-white'
+                        : isCurrent
+                        ? 'bg-white border-[#0ea5e9] text-[#0ea5e9] ring-4 ring-sky-100 shadow-sm'
+                        : 'bg-white border-slate-300 text-slate-400'
+                    }`}
+                  >
+                    {isPassed ? <Check className="w-5 h-5" /> : <Icon className="w-4 h-4" />}
+                  </div>
+                  <span
+                    className={`text-xs font-semibold mt-2.5 whitespace-nowrap ${
+                      isCurrent ? 'text-[#0ea5e9]' : isPassed ? 'text-slate-800' : 'text-slate-400'
+                    }`}
+                  >
+                    {step.label}
+                  </span>
+                  <span className="text-[10px] text-slate-400 mt-0.5">{step.time}</span>
+                </div>
+              );
+            })}
           </div>
 
-          {/* Expanded Request Details */}
-          {requestDetailsExpanded && (
-            <div className="px-5 pb-5 pt-3 border-t border-slate-100 bg-slate-50/50 text-xs text-slate-600 grid grid-cols-2 sm:grid-cols-4 gap-4">
-              <div>
-                <span className="text-slate-400 block mb-0.5">Material:</span>
-                <strong className="text-slate-800 font-semibold">{activeQuote.materialName}</strong>
-              </div>
-              <div>
-                <span className="text-slate-400 block mb-0.5">Quantity:</span>
-                <strong className="text-slate-800 font-semibold">{activeQuote.quantityTons} Metric Tons</strong>
-              </div>
-              <div>
-                <span className="text-slate-400 block mb-0.5">Preferred Grade:</span>
-                <strong className="text-slate-800 font-semibold">{activeQuote.grade}</strong>
-              </div>
-              <div>
-                <span className="text-slate-400 block mb-0.5">Delivery Destination:</span>
-                <strong className="text-slate-800 font-semibold">{activeQuote.deliveryLocation}</strong>
-              </div>
-            </div>
-          )}
+          {/* Mobile Vertical Tracker */}
+          <div className="md:hidden space-y-4 relative pl-6 before:absolute before:left-2 before:top-2 before:bottom-2 before:w-0.5 before:bg-slate-200">
+            {timelineSteps.map((step, idx) => {
+              const Icon = step.icon;
+              const isPassed = idx < currentStepIdx;
+              const isCurrent = idx === currentStepIdx;
+
+              return (
+                <div key={step.id} className="relative">
+                  <div
+                    className={`absolute -left-[27px] top-0.5 w-4 h-4 rounded-full border-2 transition-all ${
+                      isPassed
+                        ? 'bg-[#0ea5e9] border-[#0ea5e9]'
+                        : isCurrent
+                        ? 'bg-white border-[#0ea5e9] ring-4 ring-sky-100'
+                        : 'bg-white border-slate-300'
+                    }`}
+                  />
+                  <div className="flex items-center justify-between">
+                    <span className={`text-xs font-bold ${isCurrent ? 'text-[#0ea5e9]' : isPassed ? 'text-slate-800' : 'text-slate-400'}`}>
+                      {step.label}
+                    </span>
+                    <span className="text-[10px] text-slate-400">{step.time}</span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         </div>
 
-        {/* Sourcing in progress banner if stage 1 and not yet offer ready */}
-        {activeQuote.status === 'sourcing' && (
-          <div className="bg-gradient-to-r from-sky-50 via-blue-50 to-white rounded-2xl p-6 border border-sky-200 flex items-start gap-4 shadow-2xs">
-            <div className="w-10 h-10 rounded-xl bg-[#0ea5e9] text-white flex items-center justify-center shrink-0 shadow-2xs">
-              <Sparkles className="w-5 h-5 animate-pulse" />
-            </div>
-            <div>
-              <h3 className="text-sm font-bold text-slate-900">
-                AI Sourcing & Spectrographic Inspection in Progress
-              </h3>
-              <p className="text-xs text-slate-600 mt-1 leading-relaxed">
-                We are scanning yard batch spectrometer assays and calculating exact logistics rates for {activeQuote.deliveryLocation}. Your formal graded offer will be ready shortly.
-              </p>
-            </div>
-          </div>
-        )}
+        {/* ======================================================================= */}
+        {/* MAIN ALIBABA SPLIT LAYOUT: ORDER SUMMARY TABLE + STICKY RIGHT PANEL     */}
+        {/* ======================================================================= */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
 
-        {/* ======================================================================= */}
-        {/* 3. STAGE 2 — OFFER (Appears Once Sourced)                               */}
-        {/* ======================================================================= */}
-        {isStageOfferOrHigher && (
-          <div
-            className={`bg-white rounded-3xl border transition-all overflow-hidden ${
-              activeQuote.status === 'offer_ready'
-                ? 'border-[#0ea5e9]/50 ring-4 ring-sky-100 shadow-[0_12px_40px_rgba(14,165,233,0.12)]'
-                : 'border-slate-200/90 shadow-2xs opacity-90'
-            }`}
-          >
-            {/* Header: "Your Quote Is Ready" */}
-            <div className="p-6 sm:p-7 border-b border-slate-100">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-1">
-                <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-[#0f1115]">
-                  Your Quote Is Ready
-                </h2>
-                <span className="text-xs font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 px-3 py-1 rounded-full self-start">
-                  AI Inspected & Yard Allocated
+          {/* ===================================================================== */}
+          {/* LEFT: STRUCTURED ORDER SUMMARY TABLE (INVOICE LINE-ITEM STYLE)         */}
+          {/* ===================================================================== */}
+          <div className="lg:col-span-8 space-y-6">
+            
+            {/* Request Summary Strip */}
+            <div className="bg-white rounded-2xl border border-slate-200 shadow-2xs p-4 sm:p-5 flex items-center justify-between">
+              <div>
+                <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">
+                  Original RFQ Specification
+                </span>
+                <span className="text-sm font-bold text-slate-900 mt-0.5 block">
+                  {activeQuote.quantityTons} MT {activeQuote.materialName} · {activeQuote.deliveryLocation}
                 </span>
               </div>
-              {/* Subheader: "Reviewed and graded by our AI — verified by our team." */}
-              <p className="text-xs sm:text-sm text-slate-500 font-normal">
-                Reviewed and graded by our AI — verified by our team.
-              </p>
+              <span className="text-xs font-semibold text-slate-500 bg-slate-100 px-3 py-1 rounded-full">
+                Date: {activeQuote.requestDate}
+              </span>
             </div>
 
-            {/* Real Batch Photo / 3D Scan Viewer at the Top of Offer Card (Large) */}
-            <div className="relative aspect-[21/9] sm:aspect-[24/9] w-full bg-slate-100 overflow-hidden border-b border-slate-100">
-              <img
-                src={
-                  activeQuote.offer?.batchPhoto ||
-                  activeQuote.productImage ||
-                  'https://images.unsplash.com/photo-1504917599217-d4dc5ebe6122?auto=format&fit=crop&w=1200&q=80'
-                }
-                alt={activeQuote.materialName}
-                className="w-full h-full object-cover"
-              />
-              <div className="absolute top-3 left-3 bg-black/60 backdrop-blur-md text-white text-[11px] font-semibold px-3 py-1 rounded-full border border-white/20">
-                Verified Lot #WM-L902
-              </div>
-              <div className="absolute bottom-3 right-3 bg-black/60 backdrop-blur-md text-white text-[11px] font-mono px-3 py-1 rounded-full border border-white/20">
-                3D LiDAR Surface & Spectrogram Verified
-              </div>
-            </div>
-
-            {/* Section Labels: Material Details · AI Grade Report · Price · Delivery Window */}
-            <div className="p-6 sm:p-7 space-y-6">
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-xs">
-                {/* 1. Material Details */}
-                <div className="bg-slate-50 p-3.5 rounded-2xl border border-slate-200/80">
-                  <div className="text-slate-400 text-[11px] mb-1 font-semibold uppercase">Material Details</div>
-                  <div className="font-bold text-slate-900 text-sm">{activeQuote.materialName}</div>
-                  <div className="text-slate-500 mt-0.5">{activeQuote.grade} · {activeQuote.quantityTons} Tons</div>
-                </div>
-
-                {/* 2. AI Grade Report */}
-                <div className="bg-slate-50 p-3.5 rounded-2xl border border-slate-200/80">
-                  <div className="text-slate-400 text-[11px] mb-1 font-semibold uppercase">AI Grade Report</div>
-                  <div className="font-bold text-emerald-700 text-sm">
-                    {activeQuote.offer?.aiGradeReport.purityScore || 98.6}% Purity
-                  </div>
-                  <div className="text-slate-500 mt-0.5">
-                    {activeQuote.offer?.aiGradeReport.densityRating || 'High Density Charge'}
-                  </div>
-                </div>
-
-                {/* 3. Price (Navy 24px medium weight) */}
-                <div className="bg-slate-50 p-3.5 rounded-2xl border border-slate-200/80">
-                  <div className="text-slate-400 text-[11px] mb-1 font-semibold uppercase">Price</div>
-                  <div className="text-[24px] font-medium text-[#0f1115] leading-none">
-                    ₹{(activeQuote.offer?.pricePerTon || 41500).toLocaleString('en-IN')}
-                    <span className="text-xs text-slate-500 font-normal"> / ton</span>
-                  </div>
-                  <div className="text-slate-500 text-[11px] mt-1">
-                    Total: ₹{(activeQuote.offer?.totalAmount || 41500 * activeQuote.quantityTons).toLocaleString('en-IN')}
-                  </div>
-                </div>
-
-                {/* 4. Delivery Window in gray 14px beneath */}
-                <div className="bg-slate-50 p-3.5 rounded-2xl border border-slate-200/80">
-                  <div className="text-slate-400 text-[11px] mb-1 font-semibold uppercase">Delivery Window</div>
-                  <div className="text-[14px] text-slate-600 font-medium">
-                    {activeQuote.offer?.deliveryWindow || '3–5 Business Days'}
-                  </div>
-                  <div className="text-slate-400 text-[11px] mt-0.5">
-                    To {activeQuote.deliveryLocation}
-                  </div>
-                </div>
-              </div>
-
-              {/* Guarantee line in Teal with shield icon directly above Confirm Order */}
-              <div className="pt-2 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div className="flex items-center space-x-2 text-xs text-[#0ea5e9] font-medium">
-                  <ShieldCheck className="w-4 h-4 text-[#0ea5e9] shrink-0" />
-                  <span>
-                    Backed by our Delivery Guarantee — if it doesn't match this grade, we make it right.
-                  </span>
-                </div>
-
-                {/* Confirm Order CTA (solid Navy button) + Ask a Question link */}
-                <div className="flex items-center space-x-4">
-                  <button
-                    onClick={() => setQuestionPanelOpen(true)}
-                    className="text-xs text-slate-600 hover:text-[#0f1115] underline cursor-pointer"
-                  >
-                    Ask a Question
-                  </button>
-
-                  {activeQuote.status === 'offer_ready' ? (
-                    <button
-                      onClick={handleConfirmOrder}
-                      className="w-full sm:w-auto bg-[#0f1115] hover:bg-[#0284c7] text-white font-semibold text-xs sm:text-sm px-6 py-3 rounded-xl transition-all shadow-xs cursor-pointer active:scale-98"
-                    >
-                      Confirm Order
-                    </button>
-                  ) : (
-                    <span className="text-xs font-semibold text-emerald-700 bg-emerald-50 px-3 py-1.5 rounded-xl border border-emerald-200 flex items-center gap-1.5">
-                      <Check className="w-3.5 h-3.5" />
-                      <span>Order Confirmed</span>
-                    </span>
-                  )}
-                </div>
-              </div>
-
-            </div>
-          </div>
-        )}
-
-        {/* ======================================================================= */}
-        {/* 4. STAGE 3 — ORDER STATUS (Appears Once Confirmed)                      */}
-        {/* ======================================================================= */}
-        {isStageConfirmedOrHigher && (
-          <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-6 sm:p-8 space-y-6">
-            <div>
-              {/* Header: "Track Your Order" */}
-              <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-[#0f1115]">
-                Track Your Order
-              </h2>
-              {/* Reassurance line */}
-              <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
-                We'll notify you at every step — no need to check in.
-              </p>
-            </div>
-
-            {/* Vertical timeline: Quote Received → Sourcing → Offer Confirmed → In Transit → Delivered */}
-            <div className="relative pl-6 space-y-8 before:absolute before:left-2.5 before:top-2 before:bottom-2 before:w-0.5 before:bg-slate-200">
-              {[
-                {
-                  id: 'quote_received',
-                  label: 'Quote Received',
-                  time: activeQuote.requestDate,
-                  desc: 'Specification verified and entered into matching index.',
-                },
-                {
-                  id: 'sourcing',
-                  label: 'Sourcing & Grading Completed',
-                  time: 'Sep 13, 10:15 AM',
-                  desc: '3D LiDAR density mesh and XRF assay report generated.',
-                },
-                {
-                  id: 'offer_confirmed',
-                  label: 'Offer Confirmed',
-                  time: 'Sep 13, 02:40 PM',
-                  desc: 'Proforma locked. Escrow funds secured via Razorpay.',
-                },
-                {
-                  id: 'in_transit',
-                  label: 'In Transit',
-                  time: activeQuote.status === 'in_transit' || activeQuote.status === 'delivered' ? 'Dispatched' : 'Pending dispatch',
-                  desc: 'Electronic weighbridge slip verified and container sealed.',
-                },
-                {
-                  id: 'delivered',
-                  label: 'Delivered',
-                  time: activeQuote.status === 'delivered' ? 'Completed' : 'Estimated 2 days',
-                  desc: 'Destination CFS gate scan and digital weigh-in verified.',
-                },
-              ].map((stage, idx) => {
-                const isCurrent = (activeQuote.status === 'confirmed' && stage.id === 'offer_confirmed') || activeQuote.status === stage.id;
-                const isDone = (activeQuote.status === 'confirmed' && (stage.id === 'quote_received' || stage.id === 'sourcing')) || (activeQuote.status === 'in_transit' && stage.id !== 'delivered') || activeQuote.status === 'delivered';
-
-                return (
-                  <div key={stage.id} className="relative group">
-                    {/* Dot on timeline: Filled Teal for done, hollow Navy outline for current, gray for upcoming */}
-                    <div
-                      className={`absolute -left-[27px] top-1 w-4 h-4 rounded-full border-2 transition-all ${
-                        isDone
-                          ? 'bg-[#0ea5e9] border-[#0ea5e9]'
-                          : isCurrent
-                          ? 'bg-white border-[#0f1115] ring-4 ring-slate-100'
-                          : 'bg-white border-slate-300'
-                      }`}
-                    >
-                      {isDone && <Check className="w-2.5 h-2.5 text-white mx-auto mt-0.5" />}
-                    </div>
-
-                    <div>
-                      <div className="flex items-center space-x-2">
-                        <span className={`text-sm font-bold ${isCurrent ? 'text-[#0f1115]' : isDone ? 'text-slate-800' : 'text-slate-400'}`}>
-                          {stage.label}
-                        </span>
-                        {isCurrent && (
-                          <span className="text-[10px] font-semibold text-[#0ea5e9] bg-sky-50 px-2 py-0.5 rounded-full border border-sky-100">
-                            Current Stage
-                          </span>
-                        )}
-                      </div>
-                      <div className="text-[11px] text-slate-500 font-mono mt-0.5">
-                        {stage.time}
-                      </div>
-                      <div className="text-xs text-slate-500 mt-1">
-                        {stage.desc}
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
-
-        {/* ======================================================================= */}
-        {/* 5. ASK A QUESTION (Lightweight thread, persistent from Stage 2 onward)   */}
-        {/* ======================================================================= */}
-        {isStageOfferOrHigher && (
-          <div className="bg-white rounded-3xl border border-slate-200 overflow-hidden shadow-2xs">
-            <button
-              onClick={() => setQuestionPanelOpen(!questionPanelOpen)}
-              className="w-full p-5 sm:p-6 flex items-center justify-between text-left hover:bg-slate-50/70 transition-colors cursor-pointer"
-            >
-              <div className="flex items-center space-x-3">
-                <div className="w-9 h-9 rounded-xl bg-sky-50 text-[#0ea5e9] flex items-center justify-center">
-                  <MessageSquare className="w-4 h-4" />
+            {/* Sourcing in progress banner if not yet offer ready */}
+            {activeQuote.status === 'sourcing' && (
+              <div className="bg-gradient-to-r from-sky-50 to-white rounded-2xl p-6 border border-sky-200 flex items-start gap-4 shadow-2xs">
+                <div className="w-10 h-10 rounded-xl bg-[#0ea5e9] text-white flex items-center justify-center shrink-0">
+                  <Sparkles className="w-5 h-5 animate-pulse" />
                 </div>
                 <div>
-                  <h3 className="text-sm font-bold text-[#0f1115]">
-                    Questions About This Order
+                  <h3 className="text-sm font-bold text-slate-900">
+                    Sourcing & Supplier Coordination in Progress
                   </h3>
-                  <p className="text-xs text-slate-500">
-                    Ask about grading, delivery timing, or anything else…
+                  <p className="text-xs text-slate-600 mt-1 leading-relaxed">
+                    We are confirming stock availability and calculating road freight logistics to {activeQuote.deliveryLocation}. Your itemized order offer will appear below shortly.
                   </p>
                 </div>
               </div>
+            )}
 
-              <div className="flex items-center space-x-2 text-xs text-slate-400">
-                <span>{(activeQuote.messages || []).length} messages</span>
-                {questionPanelOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+            {/* Structured Order Summary Table (Invoice Line-Item Style) */}
+            {isStageOfferOrHigher && (
+              <div className="bg-white rounded-2xl border border-slate-200 shadow-2xs overflow-hidden">
+                <div className="p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/60">
+                  <div>
+                    <h3 className="text-base font-bold text-slate-900">
+                      Order Summary & Proforma Invoice
+                    </h3>
+                    <p className="text-xs text-slate-500 mt-0.5">
+                      Itemized proforma breakdown for Order #{activeQuote.orderNumber}
+                    </p>
+                  </div>
+                  <span className="text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-3 py-1 rounded-full">
+                    Supplier Allocated
+                  </span>
+                </div>
+
+                {/* Structured Invoice Table */}
+                <div className="overflow-x-auto">
+                  <table className="w-full text-xs sm:text-sm text-left">
+                    <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 uppercase text-[11px] font-semibold tracking-wider">
+                      <tr>
+                        <th className="py-3.5 px-5">Material Item</th>
+                        <th className="py-3.5 px-4 text-center">Quantity</th>
+                        <th className="py-3.5 px-4 text-right">Unit Price</th>
+                        <th className="py-3.5 px-5 text-right">Total Amount</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                      <tr>
+                        <td className="py-4 px-5">
+                          <div className="flex items-center gap-3">
+                            <div className="w-12 h-12 rounded-xl overflow-hidden bg-slate-100 border border-slate-200 shrink-0">
+                              <img
+                                src={activeQuote.offer?.batchPhoto || activeQuote.productImage || 'https://images.unsplash.com/photo-1504917599217-d4dc5ebe6122?auto=format&fit=crop&w=800&q=80'}
+                                alt={activeQuote.materialName}
+                                className="w-full h-full object-cover"
+                              />
+                            </div>
+                            <div>
+                              <div className="font-bold text-slate-900">{activeQuote.materialName}</div>
+                              <div className="text-xs text-slate-500 mt-0.5">Origin: {activeQuote.deliveryLocation}</div>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="py-4 px-4 text-center font-bold text-slate-800">
+                          {activeQuote.quantityTons} MT
+                        </td>
+                        <td className="py-4 px-4 text-right font-medium text-slate-800">
+                          ₹{unitPrice.toLocaleString('en-IN')}/ton
+                        </td>
+                        <td className="py-4 px-5 text-right font-bold text-slate-900">
+                          ₹{subtotal.toLocaleString('en-IN')}
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Key Order Attributes Table */}
+                <div className="border-t border-slate-200 p-5 bg-slate-50/30 space-y-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                    <div className="p-3.5 rounded-xl bg-white border border-slate-200">
+                      <span className="text-slate-400 font-semibold uppercase text-[10px] block mb-1">
+                        Delivery Destination
+                      </span>
+                      <strong className="text-slate-900 text-sm">{activeQuote.deliveryLocation}</strong>
+                      <span className="text-slate-500 block text-xs mt-0.5">Direct mill gate dispatch via weighbridge</span>
+                    </div>
+
+                    <div className="p-3.5 rounded-xl bg-white border border-slate-200">
+                      <span className="text-slate-400 font-semibold uppercase text-[10px] block mb-1">
+                        Delivery Window
+                      </span>
+                      <strong className="text-slate-900 text-sm">
+                        {activeQuote.offer?.deliveryWindow || '3–5 Business Days'}
+                      </strong>
+                      <span className="text-slate-500 block text-xs mt-0.5">Guaranteed schedule with live GPS container slip</span>
+                    </div>
+                  </div>
+
+                  {/* Financial Breakdown Rows */}
+                  <div className="max-w-xs ml-auto space-y-2 pt-3 border-t border-slate-200 text-xs">
+                    <div className="flex justify-between text-slate-600">
+                      <span>Subtotal ({activeQuote.quantityTons} MT):</span>
+                      <span className="font-semibold text-slate-900">₹{subtotal.toLocaleString('en-IN')}</span>
+                    </div>
+                    <div className="flex justify-between text-slate-600">
+                      <span>GST (18% Reverse Charge):</span>
+                      <span className="font-semibold text-slate-900">₹{gstEstimated.toLocaleString('en-IN')}</span>
+                    </div>
+                    <div className="flex justify-between text-slate-600">
+                      <span>Escrow Trade Protection:</span>
+                      <span className="font-semibold text-emerald-600">FREE (Covered)</span>
+                    </div>
+                    <div className="flex justify-between text-sm sm:text-base font-bold text-slate-900 pt-2 border-t border-slate-200">
+                      <span>Total Landed Cost:</span>
+                      <span className="text-[#0ea5e9]">₹{totalAmount.toLocaleString('en-IN')}</span>
+                    </div>
+                  </div>
+                </div>
+
               </div>
-            </button>
+            )}
 
-            {questionPanelOpen && (
-              <div className="px-5 sm:px-6 pb-6 pt-2 border-t border-slate-100 space-y-4">
-                {/* Message bubbles */}
-                <div className="space-y-3 max-h-60 overflow-y-auto pr-1">
+            {/* Tracking Status Card (Once Confirmed) */}
+            {isStageConfirmedOrHigher && (
+              <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-2xs space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2.5">
+                    <Truck className="w-5 h-5 text-[#0ea5e9]" />
+                    <h3 className="font-bold text-slate-900 text-base">Shipment & Weighbridge Status</h3>
+                  </div>
+                  <span className="text-xs font-semibold text-[#0ea5e9] bg-sky-50 px-3 py-1 rounded-full">
+                    GPS Multi-Axle Carrier
+                  </span>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+                  <div className="p-3 bg-slate-50 rounded-xl border border-slate-100">
+                    <span className="text-slate-400 block text-[10px] uppercase font-semibold">Carrier</span>
+                    <strong className="text-slate-800 text-xs">VRL Heavy Freightways</strong>
+                  </div>
+                  <div className="p-3 bg-slate-50 rounded-xl border border-slate-100">
+                    <span className="text-slate-400 block text-[10px] uppercase font-semibold">Weighbridge Slip</span>
+                    <strong className="text-slate-800 text-xs font-mono">WB-{activeQuote.orderNumber}-01</strong>
+                  </div>
+                  <div className="p-3 bg-slate-50 rounded-xl border border-slate-100">
+                    <span className="text-slate-400 block text-[10px] uppercase font-semibold">Escrow Status</span>
+                    <strong className="text-emerald-700 text-xs">Funds Secured in Razorpay</strong>
+                  </div>
+                </div>
+              </div>
+            )}
+
+          </div>
+
+          {/* ===================================================================== */}
+          {/* RIGHT: STICKY DESKTOP PANEL                                           */}
+          {/* Guarantee Badge + Confirm Order Button + Ask a Question Thread        */}
+          {/* ===================================================================== */}
+          <div className="lg:col-span-4 lg:sticky lg:top-24 space-y-5">
+            
+            {/* Action Card */}
+            <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-2xs space-y-5">
+              <div>
+                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">
+                  Total Payable
+                </span>
+                <div className="text-2xl sm:text-3xl font-bold text-[#0f1115] mt-0.5">
+                  ₹{totalAmount.toLocaleString('en-IN')}
+                </div>
+                <span className="text-xs text-slate-500 block mt-0.5">
+                  For {activeQuote.quantityTons} MT {activeQuote.materialName}
+                </span>
+              </div>
+
+              {/* Confirm Order CTA */}
+              {activeQuote.status === 'offer_ready' ? (
+                <button
+                  onClick={handleConfirmOrder}
+                  className="w-full bg-[#0ea5e9] hover:bg-[#0284c7] text-white font-semibold text-sm py-3.5 px-6 rounded-xl transition-all shadow-[0_8px_20px_rgba(14,165,233,0.3)] active:scale-98 cursor-pointer flex items-center justify-center gap-2"
+                >
+                  <span>Confirm Order & Lock Price</span>
+                  <ArrowRight className="w-4 h-4" />
+                </button>
+              ) : isStageConfirmedOrHigher ? (
+                <div className="w-full bg-emerald-50 text-emerald-800 border border-emerald-200 rounded-xl py-3 px-4 text-center font-bold text-xs flex items-center justify-center gap-2">
+                  <Check className="w-4 h-4 text-emerald-600" />
+                  <span>Order Confirmed & Locked</span>
+                </div>
+              ) : (
+                <div className="w-full bg-slate-100 text-slate-500 rounded-xl py-3 px-4 text-center font-medium text-xs">
+                  Sourcing in Progress…
+                </div>
+              )}
+
+              {/* Escrow Guarantee Badge */}
+              <div className="pt-4 border-t border-slate-100 flex items-start gap-2.5 text-xs text-slate-600">
+                <ShieldCheck className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
+                <div>
+                  <span className="font-bold text-slate-900 block">100% Escrow Guarantee</span>
+                  <p className="text-[11px] text-slate-500 mt-0.5 leading-relaxed">
+                    Funds are held securely in trade escrow and released only after weighbridge verification at your plant gate.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Persistent Question Thread Panel */}
+            <div className="bg-white rounded-2xl border border-slate-200 shadow-2xs overflow-hidden">
+              <div className="p-4 bg-slate-50/70 border-b border-slate-100 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <MessageSquare className="w-4 h-4 text-[#0ea5e9]" />
+                  <span className="font-bold text-slate-900 text-xs">Direct Supplier & Yard Desk</span>
+                </div>
+                <span className="text-[10px] text-slate-400 font-mono">
+                  {(activeQuote.messages || []).length} msgs
+                </span>
+              </div>
+
+              <div className="p-4 space-y-3">
+                {/* Messages View */}
+                <div className="space-y-2.5 max-h-56 overflow-y-auto pr-1">
                   {(activeQuote.messages || [
                     {
-                      id: 'default-welcome',
+                      id: 'welcome-msg',
                       sender: 'team',
-                      text: `Hello! Our metallurgical desk is actively managing order #${activeQuote.orderNumber}. Feel free to drop any questions about spectrography or freight.`,
+                      text: `Hello! Our logistics desk is tracking quote #${activeQuote.orderNumber}. Ask any questions about truck dispatch or freight.`,
                       timestamp: 'Today, 10:20 AM',
                     },
                   ]).map((msg) => (
@@ -698,20 +712,15 @@ export const QuotesPage: React.FC<QuotesPageProps> = ({
                       key={msg.id}
                       className={`flex ${msg.sender === 'buyer' ? 'justify-end' : 'justify-start'}`}
                     >
-                      {msg.sender === 'team' && (
-                        <div className="w-7 h-7 rounded-full bg-[#0f1115] text-white flex items-center justify-center text-[10px] font-bold mr-2 shrink-0 self-end mb-1">
-                          WM
-                        </div>
-                      )}
                       <div
-                        className={`max-w-[75%] rounded-2xl px-4 py-2.5 text-xs leading-relaxed ${
+                        className={`max-w-[85%] rounded-xl px-3 py-2 text-xs leading-relaxed ${
                           msg.sender === 'buyer'
-                            ? 'bg-slate-100 text-slate-900 rounded-br-xs'
-                            : 'bg-white text-slate-800 border border-slate-200 rounded-bl-xs shadow-2xs'
+                            ? 'bg-[#0ea5e9] text-white'
+                            : 'bg-slate-100 text-slate-800'
                         }`}
                       >
                         <div>{msg.text}</div>
-                        <div className="text-[10px] text-slate-400 mt-1 text-right font-mono">
+                        <div className={`text-[9px] mt-1 text-right font-mono ${msg.sender === 'buyer' ? 'text-white/70' : 'text-slate-400'}`}>
                           {msg.timestamp}
                         </div>
                       </div>
@@ -720,33 +729,33 @@ export const QuotesPage: React.FC<QuotesPageProps> = ({
                 </div>
 
                 {/* Input form */}
-                <form onSubmit={handleSendQuestion} className="flex items-center gap-2 pt-2">
+                <form onSubmit={handleSendQuestion} className="flex items-center gap-2 pt-2 border-t border-slate-100">
                   <input
                     type="text"
                     value={newQuestionText}
                     onChange={(e) => setNewQuestionText(e.target.value)}
-                    placeholder="Ask about grading, delivery timing, or anything else…"
-                    className="flex-1 bg-slate-50 border border-slate-200 focus:border-[#0ea5e9] focus:bg-white rounded-xl px-4 py-2.5 text-xs text-slate-900 outline-none transition-all"
+                    placeholder="Ask about delivery, timing, etc…"
+                    className="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-900 outline-none focus:border-[#0ea5e9] transition-all"
                   />
                   <button
                     type="submit"
                     disabled={!newQuestionText.trim()}
-                    className="bg-[#0f1115] hover:bg-[#0284c7] disabled:opacity-40 text-white px-5 py-2.5 rounded-xl text-xs font-semibold transition-all cursor-pointer shrink-0 shadow-2xs"
+                    className="bg-[#0ea5e9] hover:bg-[#0284c7] disabled:opacity-40 text-white p-2 rounded-xl text-xs transition-all cursor-pointer shrink-0 shadow-2xs"
                   >
-                    Send
+                    <Send className="w-3.5 h-3.5" />
                   </button>
                 </form>
               </div>
-            )}
-          </div>
-        )}
+            </div>
 
-        {/* ======================================================================= */}
-        {/* 6. SHARE THIS QUOTE MODAL                                               */}
-        {/* ======================================================================= */}
+          </div>
+
+        </div>
+
+        {/* Share Modal */}
         {shareModalOpen && (
-          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
-            <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-200 animate-in zoom-in-95 duration-200">
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-200">
               <div className="flex items-center justify-between pb-3 border-b border-slate-100">
                 <div className="flex items-center space-x-2.5">
                   <div className="w-9 h-9 rounded-xl bg-sky-50 text-[#0ea5e9] flex items-center justify-center">
@@ -754,23 +763,18 @@ export const QuotesPage: React.FC<QuotesPageProps> = ({
                   </div>
                   <div>
                     <h3 className="text-sm font-bold text-slate-900">Share with a colleague</h3>
-                    <p className="text-[11px] text-slate-500">
-                      Anyone with this link can view (not edit) this quote.
-                    </p>
+                    <p className="text-[11px] text-slate-500">Private quote link</p>
                   </div>
                 </div>
                 <button
                   onClick={() => setShareModalOpen(false)}
-                  className="text-slate-400 hover:text-slate-700 p-1.5 rounded-full hover:bg-slate-100 transition-colors cursor-pointer"
+                  className="text-slate-400 hover:text-slate-700 p-1 rounded-full cursor-pointer"
                 >
                   ✕
                 </button>
               </div>
 
               <div className="mt-4">
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  Private Quote Link
-                </label>
                 <div className="flex items-center gap-2">
                   <input
                     type="text"
@@ -780,10 +784,9 @@ export const QuotesPage: React.FC<QuotesPageProps> = ({
                   />
                   <button
                     onClick={handleCopyShareLink}
-                    className="bg-[#0f1115] hover:bg-[#0284c7] text-white text-xs font-semibold px-4 py-2 rounded-xl transition-all flex items-center space-x-1.5 cursor-pointer shrink-0"
+                    className="bg-[#0ea5e9] hover:bg-[#0284c7] text-white text-xs font-semibold px-4 py-2 rounded-xl transition-all cursor-pointer shrink-0"
                   >
-                    {copiedLink ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
-                    <span>{copiedLink ? 'Copied' : 'Copy'}</span>
+                    {copiedLink ? 'Copied' : 'Copy'}
                   </button>
                 </div>
               </div>
