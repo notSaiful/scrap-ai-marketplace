@@ -19,6 +19,7 @@ import { ArrowRight } from 'lucide-react';
 import { MarketlyFAQ } from './components/MarketlyFAQ';
 import { MarketlyMissionSection } from './components/MarketlyMissionSection';
 import { MarketlyNewsletter } from './components/MarketlyNewsletter';
+import { FinalCTASection } from './components/FinalCTASection';
 import { MarketlyFooter } from './components/MarketlyFooter';
 import { AIAdvisorPage } from './components/AIAdvisorPage';
 import { ContactUsPage } from './components/ContactUsPage';
@@ -447,6 +448,12 @@ function MarketplaceContent() {
 
             {/* FAQ Accordion Section (AK FAQ Framer Style) */}
             <MarketlyFAQ onOpenContactUs={handleOpenContactUs} />
+
+            {/* 9. Final CTA before the footer */}
+            <FinalCTASection
+              onOpenRFQ={() => handleOpenRFQ()}
+              onExploreLots={() => handleOpenCategoriesPage('all')}
+            />
 
             {/* Newsletter Subscription Card */}
             <MarketlyNewsletter />
