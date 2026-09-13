@@ -2,430 +2,792 @@ import React, { useState } from 'react';
 import {
   ArrowLeft,
   FileText,
-  Clock,
   CheckCircle2,
   Truck,
   PackageCheck,
   ShieldCheck,
   Search,
   Plus,
-  ExternalLink,
-  Download,
-  AlertCircle,
-  Building2,
+  Share2,
+  ChevronDown,
+  ChevronUp,
+  MessageSquare,
+  Send,
+  Sparkles,
   MapPin,
-  ChevronRight,
-  Filter,
+  Calendar,
+  Check,
+  Copy,
+  ExternalLink,
+  Info,
+  Clock,
+  ArrowRight,
 } from 'lucide-react';
+
+export interface QuoteMessage {
+  id: string;
+  sender: 'buyer' | 'team';
+  text: string;
+  timestamp: string;
+}
 
 export interface BuyerQuoteEnquiry {
   id: string;
-  orderNumber: string;
-  requestTitle: string; // e.g. "Requested: 5 tons Steel Scrap, Grade A · May 14, 2026"
-  materialName: string;
-  grade: string;
+  orderNumber: string; // e.g. "WM-1042"
+  requestTitle: string; // e.g. "Requested: 5 tons Steel Scrap, Grade A · Bengaluru · Sep 13"
+  materialName: string; // e.g. "Steel Scrap"
+  grade: 'Grade A' | 'Grade B' | 'Grade C' | string;
   quantityTons: number;
-  requestDate: string;
-  targetPricePerTon: number;
-  totalEstimatedAmount: number;
-  destinationPort: string;
-  incoterm: string;
-  supplierName: string;
-  supplierOrigin: string;
+  deliveryLocation: string; // e.g. "Bengaluru, Karnataka"
+  requestDate: string; // e.g. "Sep 13, 2026"
+  referencePhoto?: string;
   productImage?: string;
-  status: 'sourcing' | 'confirmed' | 'in_transit' | 'delivered';
-  statusSteps: {
-    sourcing: { date: string; details: string; done: boolean };
-    confirmed: { date: string; details: string; done: boolean };
-    inTransit: { date: string; details: string; done: boolean };
-    delivered: { date: string; details: string; done: boolean };
+
+  // Stage & Status:
+  // "quote_received" | "sourcing" | "offer_ready" | "confirmed" | "in_transit" | "delivered"
+  status: 'quote_received' | 'sourcing' | 'offer_ready' | 'confirmed' | 'in_transit' | 'delivered';
+
+  // Offer Details (Stage 2)
+  offer?: {
+    pricePerTon: number; // e.g. 42000
+    totalAmount: number;
+    deliveryWindow: string; // e.g. "Sep 18 – Sep 21 (3-5 business days)"
+    batchPhoto: string;
+    aiGradeReport: {
+      purityScore: number;
+      spectrographicSummary: string;
+      densityRating: string;
+      verifiedDate: string;
+    };
+    supplierName: string;
+    supplierOrigin: string;
   };
-  orderConfirmation: {
-    orderId: string;
-    confirmedAt: string;
-    escrowStatus: 'Razorpay Escrow Funded' | 'Milestone Locked' | 'Disbursed to Yard';
-    escrowNodeId: string;
-    assayReportId: string;
-    assayPurity: string;
-    weighbridgeSlipNumber?: string;
-    carrier?: string;
-    containerNumber?: string;
-    eta?: string;
+
+  // Tracking Timeline Details (Stage 3)
+  timeline?: {
+    quoteReceivedAt: string;
+    sourcingStartedAt?: string;
+    offerConfirmedAt?: string;
+    inTransitAt?: string;
+    deliveredAt?: string;
+    trackingCarrier?: string;
+    containerSlipId?: string;
   };
-  buyerNotes?: string;
+
+  // Lightweight Question Thread
+  messages?: QuoteMessage[];
 }
 
 interface QuotesPageProps {
   quotes: BuyerQuoteEnquiry[];
   onGoHome: () => void;
-  onOpenNewRFQ: () => void;
+  onOpenNewRFQ: (defaultMaterial?: string) => void;
+  onUpdateQuoteStatus?: (quoteId: string, newStatus: BuyerQuoteEnquiry['status']) => void;
+  onAddQuoteMessage?: (quoteId: string, messageText: string) => void;
   onOpenContactUs?: () => void;
 }
-
-const STATUS_STEPS = [
-  { key: 'sourcing', label: 'Sourcing', icon: Search, desc: 'Yard lot allocation & spectrographic check' },
-  { key: 'confirmed', label: 'Confirmed', icon: CheckCircle2, desc: 'Razorpay Escrow locked & booking confirmed' },
-  { key: 'in_transit', label: 'In Transit', icon: Truck, desc: 'Container sealed, electronic weighbridge verified' },
-  { key: 'delivered', label: 'Delivered', icon: PackageCheck, desc: 'Destination clearance & escrow settled' },
-] as const;
 
 export const QuotesPage: React.FC<QuotesPageProps> = ({
   quotes,
   onGoHome,
   onOpenNewRFQ,
-  onOpenContactUs,
+  onUpdateQuoteStatus,
+  onAddQuoteMessage,
 }) => {
-  const [filterStatus, setFilterStatus] = useState<'all' | 'sourcing' | 'confirmed' | 'in_transit' | 'delivered'>('all');
-  const [searchFilter, setSearchFilter] = useState('');
+  // If activeQuoteId is set, view single evolving quote thread (/quotes/[id]), otherwise list view
+  const [activeQuoteId, setActiveQuoteId] = useState<string | null>(quotes.length > 0 ? quotes[0].id : null);
+  const [requestDetailsExpanded, setRequestDetailsExpanded] = useState(false);
+  const [questionPanelOpen, setQuestionPanelOpen] = useState(false);
+  const [newQuestionText, setNewQuestionText] = useState('');
+  const [shareModalOpen, setShareModalOpen] = useState(false);
+  const [copiedLink, setCopiedLink] = useState(false);
 
-  const filteredQuotes = quotes.filter((q) => {
-    if (filterStatus !== 'all' && q.status !== filterStatus) return false;
-    if (searchFilter.trim()) {
-      const query = searchFilter.toLowerCase();
-      const matchesTitle = q.requestTitle.toLowerCase().includes(query);
-      const matchesMaterial = q.materialName.toLowerCase().includes(query);
-      const matchesOrder = q.orderConfirmation.orderId.toLowerCase().includes(query);
-      return matchesTitle || matchesMaterial || matchesOrder;
+  // Active Quote object
+  const activeQuote = quotes.find((q) => q.id === activeQuoteId) || null;
+
+  // Status Badge Pill Styling (Exact User Spec)
+  // Gray = Quote Received, Teal outline = Sourcing, Solid Teal = Offer Ready, Solid Navy = Confirmed/In Transit, Navy with checkmark = Delivered
+  const getStatusPill = (status: BuyerQuoteEnquiry['status']) => {
+    switch (status) {
+      case 'quote_received':
+        return (
+          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-700 border border-slate-200">
+            Quote Received
+          </span>
+        );
+      case 'sourcing':
+        return (
+          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-transparent text-[#0ea5e9] border border-[#0ea5e9]">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#0ea5e9] mr-1.5 animate-pulse" />
+            Sourcing in Progress
+          </span>
+        );
+      case 'offer_ready':
+        return (
+          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-[#0ea5e9] text-white shadow-2xs">
+            Offer Ready
+          </span>
+        );
+      case 'confirmed':
+        return (
+          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-[#0f1115] text-white">
+            Confirmed
+          </span>
+        );
+      case 'in_transit':
+        return (
+          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-[#0f1115] text-white">
+            <Truck className="w-3.5 h-3.5 mr-1 text-sky-400" />
+            In Transit
+          </span>
+        );
+      case 'delivered':
+        return (
+          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-[#0f1115] text-emerald-400 border border-emerald-500/30">
+            <Check className="w-3.5 h-3.5 mr-1 text-emerald-400" />
+            Delivered
+          </span>
+        );
+      default:
+        return (
+          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-700">
+            Quote Received
+          </span>
+        );
     }
-    return true;
-  });
-
-  const getStepIndex = (status: 'sourcing' | 'confirmed' | 'in_transit' | 'delivered') => {
-    if (status === 'sourcing') return 0;
-    if (status === 'confirmed') return 1;
-    if (status === 'in_transit') return 2;
-    if (status === 'delivered') return 3;
-    return 0;
   };
 
-  return (
-    <div className="min-h-screen bg-[#f8f9fa] pt-24 sm:pt-28 pb-20 selection:bg-sky-500/15 selection:text-[#0284c7]">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-        
-        {/* Top Breadcrumb & Actions */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 text-xs text-[#86868b]">
-          <div className="flex items-center space-x-2">
+  const handleSendQuestion = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (!newQuestionText.trim() || !activeQuote) return;
+
+    if (onAddQuoteMessage) {
+      onAddQuoteMessage(activeQuote.id, newQuestionText.trim());
+    } else {
+      // Local fallback
+      const msg: QuoteMessage = {
+        id: `msg-${Date.now()}`,
+        sender: 'buyer',
+        text: newQuestionText.trim(),
+        timestamp: 'Just now',
+      };
+      if (!activeQuote.messages) activeQuote.messages = [];
+      activeQuote.messages.push(msg);
+
+      // Automated Team Reply simulation
+      setTimeout(() => {
+        if (activeQuote) {
+          if (!activeQuote.messages) activeQuote.messages = [];
+          activeQuote.messages.push({
+            id: `reply-${Date.now()}`,
+            sender: 'team',
+            text: 'Thank you for your question. Our metallurgical verification desk is reviewing the yard assay details and will confirm within 15 minutes.',
+            timestamp: 'Just now',
+          });
+          setNewQuestionText('');
+        }
+      }, 900);
+    }
+    setNewQuestionText('');
+  };
+
+  const handleConfirmOrder = () => {
+    if (!activeQuote) return;
+    if (onUpdateQuoteStatus) {
+      onUpdateQuoteStatus(activeQuote.id, 'confirmed');
+    } else {
+      activeQuote.status = 'confirmed';
+      if (!activeQuote.timeline) {
+        activeQuote.timeline = {
+          quoteReceivedAt: activeQuote.requestDate,
+          sourcingStartedAt: 'Today, 10:15 AM',
+          offerConfirmedAt: 'Just now',
+        };
+      }
+    }
+  };
+
+  const handleCopyShareLink = () => {
+    navigator.clipboard?.writeText(window.location.href);
+    setCopiedLink(true);
+    setTimeout(() => setCopiedLink(false), 2000);
+  };
+
+  // =========================================================================
+  // 0. MY QUOTES (LIST VIEW) — ENTRY POINT
+  // =========================================================================
+  if (!activeQuoteId || !activeQuote) {
+    return (
+      <div className="min-h-screen bg-[#F7F8FA] pt-24 sm:pt-28 pb-24 text-slate-900">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6">
+          
+          {/* List Header */}
+          <div className="flex items-center justify-between mb-8">
+            <div>
+              <div className="flex items-center space-x-2 text-xs text-slate-400 mb-1">
+                <button onClick={onGoHome} className="hover:underline hover:text-slate-700 cursor-pointer">
+                  Marketplace
+                </button>
+                <span>/</span>
+                <span className="text-slate-700 font-semibold">Buyer Dashboard</span>
+              </div>
+              <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-[#0f1115]">
+                My Quotes
+              </h1>
+            </div>
+
             <button
-              onClick={onGoHome}
-              className="hover:text-[#0f1115] transition-colors flex items-center gap-1 cursor-pointer font-medium"
+              onClick={() => onOpenNewRFQ()}
+              className="bg-[#0f1115] hover:bg-[#0284c7] text-white px-5 py-2.5 rounded-xl text-xs font-semibold transition-all flex items-center space-x-2 shadow-2xs cursor-pointer active:scale-98"
             >
-              <ArrowLeft className="w-3.5 h-3.5" />
-              <span>Back to Marketplace</span>
+              <Plus className="w-4 h-4" />
+              <span>New Quote</span>
             </button>
-            <span>/</span>
-            <span className="text-[#0f1115] font-semibold">Quotes & Orders</span>
           </div>
 
-          <button
-            onClick={onOpenNewRFQ}
-            className="self-start sm:self-auto bg-gradient-to-r from-[#38bdf8] via-[#0ea5e9] to-[#0284c7] hover:from-[#0ea5e9] hover:to-[#0369a1] text-white px-4 py-2 rounded-xl text-xs font-semibold flex items-center space-x-1.5 shadow-2xs transition-all active:scale-98 cursor-pointer"
-          >
-            <Plus className="w-4 h-4" />
-            <span>Request New Quote</span>
-          </button>
-        </div>
-
-        {/* Page Heading */}
-        <div className="mb-8">
-          <div className="inline-flex items-center space-x-2 text-xs font-semibold text-[#0ea5e9] mb-1.5 uppercase tracking-wider">
-            <ShieldCheck className="w-4 h-4 text-[#0ea5e9]" />
-            <span>Buyer Quote & Order Tracking</span>
-          </div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-[#0f1115] tracking-tight">
-            My Quote Requests & Orders
-          </h1>
-          <p className="text-xs sm:text-sm text-slate-500 mt-1">
-            Track your quote enquiries, order confirmations, and real-time delivery status: Sourcing → Confirmed → In Transit → Delivered.
-          </p>
-        </div>
-
-        {/* Filter Pills & Search */}
-        <div className="bg-white p-3 rounded-2xl border border-slate-200 shadow-2xs mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div className="flex items-center gap-1.5 overflow-x-auto custom-scrollbar pb-1 sm:pb-0">
-            {(['all', 'sourcing', 'confirmed', 'in_transit', 'delivered'] as const).map((st) => (
+          {/* Empty State vs Simple Vertical List */}
+          {quotes.length === 0 ? (
+            <div className="bg-white rounded-3xl border border-slate-200 p-12 text-center max-w-lg mx-auto shadow-xs">
+              <div className="w-14 h-14 rounded-2xl bg-sky-50 text-[#0284c7] flex items-center justify-center mx-auto mb-4">
+                <FileText className="w-7 h-7" />
+              </div>
+              {/* Exact user requested copy */}
+              <h3 className="text-base font-bold text-[#0f1115]">
+                You haven't requested a quote yet.
+              </h3>
+              <p className="text-xs sm:text-sm text-slate-500 mt-1 mb-6">
+                Browse materials to get started.
+              </p>
               <button
-                key={st}
-                onClick={() => setFilterStatus(st)}
-                className={`text-xs font-semibold px-3 py-1.5 rounded-xl transition-all cursor-pointer whitespace-nowrap capitalize ${
-                  filterStatus === st
-                    ? 'bg-[#0f1115] text-white shadow-2xs'
-                    : 'bg-slate-50 hover:bg-slate-100 text-slate-600'
-                }`}
+                onClick={onGoHome}
+                className="bg-[#0f1115] hover:bg-[#0284c7] text-white px-6 py-2.5 rounded-xl text-xs font-semibold transition-all cursor-pointer shadow-xs"
               >
-                {st === 'all' ? `All (${quotes.length})` : st.replace('_', ' ')}
+                Browse Materials
               </button>
-            ))}
-          </div>
-
-          <div className="relative w-full sm:w-64">
-            <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-2.5" />
-            <input
-              type="text"
-              value={searchFilter}
-              onChange={(e) => setSearchFilter(e.target.value)}
-              placeholder="Search by quote, lot or order #..."
-              className="w-full bg-slate-50 border border-slate-200 focus:border-[#0ea5e9] focus:bg-white rounded-xl pl-9 pr-3 py-1.5 text-xs text-slate-900 outline-none transition-all"
-            />
-          </div>
-        </div>
-
-        {/* List of Quotes (All in one page for each quote enquiry) */}
-        {filteredQuotes.length === 0 ? (
-          <div className="text-center py-16 bg-white rounded-3xl border border-slate-200 p-8">
-            <FileText className="w-12 h-12 text-slate-300 mx-auto mb-3" />
-            <h3 className="text-base font-bold text-slate-900">No quote requests found</h3>
-            <p className="text-xs text-slate-500 mt-1 mb-4">
-              You haven't requested any quotes matching the selected filter.
-            </p>
-            <button
-              onClick={onOpenNewRFQ}
-              className="bg-[#0284c7] hover:bg-[#0369a1] text-white px-5 py-2 rounded-xl text-xs font-semibold cursor-pointer"
-            >
-              Request a Custom Quote
-            </button>
-          </div>
-        ) : (
-          <div className="space-y-6">
-            {filteredQuotes.map((q) => {
-              const currentStepIdx = getStepIndex(q.status);
-
-              return (
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {quotes.map((q) => (
                 <div
                   key={q.id}
-                  className="bg-white rounded-3xl border border-slate-200/90 shadow-xs hover:shadow-sm transition-all overflow-hidden p-6 sm:p-7"
+                  onClick={() => setActiveQuoteId(q.id)}
+                  className="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200 hover:border-[#0ea5e9] shadow-2xs hover:shadow-sm transition-all cursor-pointer flex flex-col sm:flex-row sm:items-center justify-between gap-3 group"
                 >
-                  {/* ========================================================= */}
-                  {/* 1. QUOTE REQUEST MADE BY BUYER (Header)                    */}
-                  {/* ========================================================= */}
-                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-5 border-b border-slate-100">
-                    <div className="flex items-center gap-4">
-                      {q.productImage ? (
-                        <div className="relative w-16 h-16 sm:w-20 sm:h-20 rounded-2xl overflow-hidden border border-slate-200/80 shrink-0 shadow-2xs bg-slate-100">
-                          <img
-                            src={q.productImage}
-                            alt={q.materialName}
-                            className="w-full h-full object-cover"
-                          />
-                        </div>
-                      ) : (
-                        <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-sky-50 border border-sky-100 flex items-center justify-center shrink-0 text-[#0284c7]">
-                          <FileText className="w-7 h-7" />
-                        </div>
-                      )}
-
-                      <div>
-                        {/* Exact Requested Format Highlight */}
-                        <div className="text-base sm:text-lg font-bold text-slate-900 tracking-tight flex items-center gap-2">
-                          <span>{q.requestTitle}</span>
-                        </div>
-                        <div className="text-xs text-slate-500 mt-1 flex flex-wrap items-center gap-2">
-                          <span>Lot: <strong className="text-slate-800 font-semibold">{q.materialName}</strong></span>
-                          <span>•</span>
-                          <span>Grade: <strong className="text-slate-800">{q.grade}</strong></span>
-                          <span>•</span>
-                          <span>Ref: <strong className="font-mono text-slate-700">{q.orderNumber}</strong></span>
-                        </div>
-                        <div className="text-[11px] text-slate-400 mt-0.5">
-                          Supplier: <strong className="text-slate-600">{q.supplierName}</strong> ({q.supplierOrigin})
-                        </div>
+                  <div className="flex items-center space-x-3.5">
+                    {q.productImage ? (
+                      <img
+                        src={q.productImage}
+                        alt={q.materialName}
+                        className="w-12 h-12 rounded-xl object-cover border border-slate-100 shrink-0"
+                      />
+                    ) : (
+                      <div className="w-12 h-12 rounded-xl bg-slate-100 flex items-center justify-center text-slate-400 shrink-0">
+                        <FileText className="w-5 h-5" />
                       </div>
-                    </div>
+                    )}
 
-                    {/* Status Badge */}
-                    <div className="flex items-center space-x-2 shrink-0 self-start sm:self-center">
-                      <span
-                        className={`text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider border ${
-                          q.status === 'sourcing'
-                            ? 'bg-amber-50 text-amber-700 border-amber-200'
-                            : q.status === 'confirmed'
-                            ? 'bg-sky-50 text-[#0284c7] border-sky-200'
-                            : q.status === 'in_transit'
-                            ? 'bg-indigo-50 text-indigo-700 border-indigo-200'
-                            : 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                        }`}
-                      >
-                        {q.status === 'sourcing' && 'Stage: Sourcing'}
-                        {q.status === 'confirmed' && 'Stage: Confirmed'}
-                        {q.status === 'in_transit' && 'Stage: In Transit'}
-                        {q.status === 'delivered' && 'Stage: Delivered'}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* ========================================================= */}
-                  {/* 2. DELIVERY STATUS TRACKING: Sourcing → Confirmed → In Transit → Delivered */}
-                  {/* ========================================================= */}
-                  <div className="py-6">
-                    <div className="text-xs font-bold text-slate-800 uppercase tracking-wider mb-4 flex items-center gap-1.5">
-                      <span>Delivery Status Progress:</span>
-                      <span className="text-[#0284c7] font-semibold">
-                        Sourcing → Confirmed → In Transit → Delivered
-                      </span>
-                    </div>
-
-                    {/* Visual Stepper */}
-                    <div className="relative">
-                      {/* Background Bar */}
-                      <div className="hidden sm:block absolute top-5 left-8 right-8 h-1 bg-slate-100 -z-0">
-                        <div
-                          className="h-full bg-gradient-to-r from-[#38bdf8] via-[#0ea5e9] to-[#0284c7] transition-all duration-500"
-                          style={{
-                            width: `${(currentStepIdx / (STATUS_STEPS.length - 1)) * 100}%`,
-                          }}
-                        />
+                    <div>
+                      {/* Format: "[Material] — [Quantity] · [Status pill] · [Date]" */}
+                      <div className="text-sm sm:text-base font-bold text-[#0f1115] group-hover:text-[#0284c7] transition-colors">
+                        {q.materialName} — {q.quantityTons} tons
                       </div>
-
-                      {/* 4 Steps */}
-                      <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 relative z-10">
-                        {STATUS_STEPS.map((step, idx) => {
-                          const isDone = idx < currentStepIdx;
-                          const isCurrent = idx === currentStepIdx;
-                          const isPending = idx > currentStepIdx;
-                          const IconComp = step.icon;
-
-                          return (
-                            <div
-                              key={step.key}
-                              className={`flex sm:flex-col items-center sm:text-center gap-3 sm:gap-2 p-2 sm:p-0 rounded-2xl ${
-                                isCurrent ? 'bg-sky-50/70 sm:bg-transparent' : ''
-                              }`}
-                            >
-                              {/* Step Circle */}
-                              <div
-                                className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-xs transition-all shadow-2xs shrink-0 ${
-                                  isDone
-                                    ? 'bg-emerald-500 text-white'
-                                    : isCurrent
-                                    ? 'bg-[#0ea5e9] text-white ring-4 ring-sky-100 animate-pulse'
-                                    : 'bg-slate-100 text-slate-400 border border-slate-200'
-                                }`}
-                              >
-                                {isDone ? (
-                                  <CheckCircle2 className="w-5 h-5 text-white" />
-                                ) : (
-                                  <IconComp className="w-5 h-5" />
-                                )}
-                              </div>
-
-                              {/* Label & Details */}
-                              <div className="text-left sm:text-center">
-                                <div
-                                  className={`text-xs font-bold leading-tight ${
-                                    isDone || isCurrent ? 'text-slate-900' : 'text-slate-400'
-                                  }`}
-                                >
-                                  {step.label}
-                                  {isCurrent && (
-                                    <span className="ml-1.5 inline-block text-[10px] text-[#0284c7] bg-sky-100 px-1.5 py-0.2 rounded font-semibold">
-                                      Current
-                                    </span>
-                                  )}
-                                </div>
-                                <div className="text-[11px] text-slate-500 leading-tight mt-0.5 max-w-[170px] mx-auto">
-                                  {step.desc}
-                                </div>
-                              </div>
-                            </div>
-                          );
-                        })}
+                      <div className="text-xs text-slate-500 mt-0.5">
+                        Ref: <span className="font-mono text-slate-700">{q.orderNumber}</span> · {q.deliveryLocation} · {q.requestDate}
                       </div>
                     </div>
                   </div>
 
-                  {/* ========================================================= */}
-                  {/* 3. ORDER CONFIRMATION & LOT FINANCIAL DETAILS             */}
-                  {/* ========================================================= */}
-                  <div className="pt-4 border-t border-slate-100 bg-slate-50/50 -mx-6 -mb-6 sm:-mx-7 sm:-mb-7 p-6 sm:p-7 rounded-b-3xl">
-                    <div className="text-xs font-bold text-slate-800 uppercase tracking-wider mb-3">
-                      Order Confirmation & Commercial Terms
+                  {/* Status Pill on the Right */}
+                  <div className="flex items-center justify-between sm:justify-end space-x-3 self-start sm:self-center">
+                    {getStatusPill(q.status)}
+                    <ArrowRight className="w-4 h-4 text-slate-400 group-hover:translate-x-1 group-hover:text-[#0284c7] transition-all hidden sm:block" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+        </div>
+      </div>
+    );
+  }
+
+  // =========================================================================
+  // SINGLE EVOLVING "QUOTE THREAD" PAGE (/quotes/[id])
+  // =========================================================================
+  const isStageOfferOrHigher = activeQuote.status === 'offer_ready' || activeQuote.status === 'confirmed' || activeQuote.status === 'in_transit' || activeQuote.status === 'delivered';
+  const isStageConfirmedOrHigher = activeQuote.status === 'confirmed' || activeQuote.status === 'in_transit' || activeQuote.status === 'delivered';
+
+  return (
+    <div className="min-h-screen bg-[#F7F8FA] pt-24 sm:pt-28 pb-32 text-slate-900 selection:bg-sky-500/15 selection:text-[#0284c7]">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 space-y-6">
+
+        {/* ======================================================================= */}
+        {/* 1. PAGE HEADER (Persistent Across All Stages)                           */}
+        {/* ======================================================================= */}
+        <div className="sticky top-20 z-20 bg-[#F7F8FA]/90 backdrop-blur-md py-3 border-b border-black/[0.05] flex items-center justify-between gap-4">
+          
+          {/* Breadcrumb: "My Quotes / Steel Scrap Quote #WM-1042" */}
+          <div className="flex items-center space-x-2 text-[13px] text-slate-500 min-w-0">
+            <button
+              onClick={() => setActiveQuoteId(null)}
+              className="hover:underline hover:text-slate-900 font-medium cursor-pointer shrink-0"
+            >
+              My Quotes
+            </button>
+            <span>/</span>
+            <span className="text-slate-900 font-semibold truncate">
+              {activeQuote.materialName} Quote #{activeQuote.orderNumber}
+            </span>
+          </div>
+
+          {/* Persistent Actions & Live Status Pill */}
+          <div className="flex items-center space-x-2 shrink-0">
+            {/* Share with colleague icon button */}
+            <button
+              onClick={() => setShareModalOpen(true)}
+              className="p-2 rounded-full bg-white border border-slate-200 text-slate-600 hover:text-black hover:bg-slate-50 transition-all active:scale-95 cursor-pointer shadow-2xs"
+              title="Share with a colleague"
+            >
+              <Share2 className="w-4 h-4" />
+            </button>
+
+            {/* Live Status Pill pinned near top */}
+            {getStatusPill(activeQuote.status)}
+          </div>
+        </div>
+
+        {/* ======================================================================= */}
+        {/* 2. STAGE 1 — REQUEST (Collapses to Summary Card)                       */}
+        {/* ======================================================================= */}
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-2xs overflow-hidden transition-all">
+          <div className="p-4 sm:p-5 flex items-center justify-between gap-4">
+            <div>
+              <div className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-0.5">
+                Quote Request Summary
+              </div>
+              {/* Collapsed format: "Requested: 5 tons Steel Scrap, Grade A · Bengaluru · Sep 13" */}
+              <div className="text-sm sm:text-base font-bold text-[#0f1115]">
+                Requested: {activeQuote.quantityTons} tons {activeQuote.materialName}, {activeQuote.grade} · {activeQuote.deliveryLocation} · {activeQuote.requestDate}
+              </div>
+              {/* Small link: "Edit request" (only available before sourcing begins) */}
+              {activeQuote.status === 'quote_received' && (
+                <button
+                  onClick={() => onOpenNewRFQ(activeQuote.materialName)}
+                  className="text-xs text-[#0ea5e9] hover:underline mt-1 font-medium cursor-pointer"
+                >
+                  Edit request
+                </button>
+              )}
+            </div>
+
+            {/* Collapse / Expand details button */}
+            <button
+              onClick={() => setRequestDetailsExpanded(!requestDetailsExpanded)}
+              className="p-2 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer shrink-0"
+              title={requestDetailsExpanded ? 'Collapse' : 'Expand full request details'}
+            >
+              {requestDetailsExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+            </button>
+          </div>
+
+          {/* Expanded Request Details */}
+          {requestDetailsExpanded && (
+            <div className="px-5 pb-5 pt-3 border-t border-slate-100 bg-slate-50/50 text-xs text-slate-600 grid grid-cols-2 sm:grid-cols-4 gap-4">
+              <div>
+                <span className="text-slate-400 block mb-0.5">Material:</span>
+                <strong className="text-slate-800 font-semibold">{activeQuote.materialName}</strong>
+              </div>
+              <div>
+                <span className="text-slate-400 block mb-0.5">Quantity:</span>
+                <strong className="text-slate-800 font-semibold">{activeQuote.quantityTons} Metric Tons</strong>
+              </div>
+              <div>
+                <span className="text-slate-400 block mb-0.5">Preferred Grade:</span>
+                <strong className="text-slate-800 font-semibold">{activeQuote.grade}</strong>
+              </div>
+              <div>
+                <span className="text-slate-400 block mb-0.5">Delivery Destination:</span>
+                <strong className="text-slate-800 font-semibold">{activeQuote.deliveryLocation}</strong>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Sourcing in progress banner if stage 1 and not yet offer ready */}
+        {activeQuote.status === 'sourcing' && (
+          <div className="bg-gradient-to-r from-sky-50 via-blue-50 to-white rounded-2xl p-6 border border-sky-200 flex items-start gap-4 shadow-2xs">
+            <div className="w-10 h-10 rounded-xl bg-[#0ea5e9] text-white flex items-center justify-center shrink-0 shadow-2xs">
+              <Sparkles className="w-5 h-5 animate-pulse" />
+            </div>
+            <div>
+              <h3 className="text-sm font-bold text-slate-900">
+                AI Sourcing & Spectrographic Inspection in Progress
+              </h3>
+              <p className="text-xs text-slate-600 mt-1 leading-relaxed">
+                We are scanning yard batch spectrometer assays and calculating exact logistics rates for {activeQuote.deliveryLocation}. Your formal graded offer will be ready shortly.
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* ======================================================================= */}
+        {/* 3. STAGE 2 — OFFER (Appears Once Sourced)                               */}
+        {/* ======================================================================= */}
+        {isStageOfferOrHigher && (
+          <div
+            className={`bg-white rounded-3xl border transition-all overflow-hidden ${
+              activeQuote.status === 'offer_ready'
+                ? 'border-[#0ea5e9]/50 ring-4 ring-sky-100 shadow-[0_12px_40px_rgba(14,165,233,0.12)]'
+                : 'border-slate-200/90 shadow-2xs opacity-90'
+            }`}
+          >
+            {/* Header: "Your Quote Is Ready" */}
+            <div className="p-6 sm:p-7 border-b border-slate-100">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-1">
+                <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-[#0f1115]">
+                  Your Quote Is Ready
+                </h2>
+                <span className="text-xs font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 px-3 py-1 rounded-full self-start">
+                  AI Inspected & Yard Allocated
+                </span>
+              </div>
+              {/* Subheader: "Reviewed and graded by our AI — verified by our team." */}
+              <p className="text-xs sm:text-sm text-slate-500 font-normal">
+                Reviewed and graded by our AI — verified by our team.
+              </p>
+            </div>
+
+            {/* Real Batch Photo / 3D Scan Viewer at the Top of Offer Card (Large) */}
+            <div className="relative aspect-[21/9] sm:aspect-[24/9] w-full bg-slate-100 overflow-hidden border-b border-slate-100">
+              <img
+                src={
+                  activeQuote.offer?.batchPhoto ||
+                  activeQuote.productImage ||
+                  'https://images.unsplash.com/photo-1504917599217-d4dc5ebe6122?auto=format&fit=crop&w=1200&q=80'
+                }
+                alt={activeQuote.materialName}
+                className="w-full h-full object-cover"
+              />
+              <div className="absolute top-3 left-3 bg-black/60 backdrop-blur-md text-white text-[11px] font-semibold px-3 py-1 rounded-full border border-white/20">
+                Verified Lot #WM-L902
+              </div>
+              <div className="absolute bottom-3 right-3 bg-black/60 backdrop-blur-md text-white text-[11px] font-mono px-3 py-1 rounded-full border border-white/20">
+                3D LiDAR Surface & Spectrogram Verified
+              </div>
+            </div>
+
+            {/* Section Labels: Material Details · AI Grade Report · Price · Delivery Window */}
+            <div className="p-6 sm:p-7 space-y-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-xs">
+                {/* 1. Material Details */}
+                <div className="bg-slate-50 p-3.5 rounded-2xl border border-slate-200/80">
+                  <div className="text-slate-400 text-[11px] mb-1 font-semibold uppercase">Material Details</div>
+                  <div className="font-bold text-slate-900 text-sm">{activeQuote.materialName}</div>
+                  <div className="text-slate-500 mt-0.5">{activeQuote.grade} · {activeQuote.quantityTons} Tons</div>
+                </div>
+
+                {/* 2. AI Grade Report */}
+                <div className="bg-slate-50 p-3.5 rounded-2xl border border-slate-200/80">
+                  <div className="text-slate-400 text-[11px] mb-1 font-semibold uppercase">AI Grade Report</div>
+                  <div className="font-bold text-emerald-700 text-sm">
+                    {activeQuote.offer?.aiGradeReport.purityScore || 98.6}% Purity
+                  </div>
+                  <div className="text-slate-500 mt-0.5">
+                    {activeQuote.offer?.aiGradeReport.densityRating || 'High Density Charge'}
+                  </div>
+                </div>
+
+                {/* 3. Price (Navy 24px medium weight) */}
+                <div className="bg-slate-50 p-3.5 rounded-2xl border border-slate-200/80">
+                  <div className="text-slate-400 text-[11px] mb-1 font-semibold uppercase">Price</div>
+                  <div className="text-[24px] font-medium text-[#0f1115] leading-none">
+                    ₹{(activeQuote.offer?.pricePerTon || 41500).toLocaleString('en-IN')}
+                    <span className="text-xs text-slate-500 font-normal"> / ton</span>
+                  </div>
+                  <div className="text-slate-500 text-[11px] mt-1">
+                    Total: ₹{(activeQuote.offer?.totalAmount || 41500 * activeQuote.quantityTons).toLocaleString('en-IN')}
+                  </div>
+                </div>
+
+                {/* 4. Delivery Window in gray 14px beneath */}
+                <div className="bg-slate-50 p-3.5 rounded-2xl border border-slate-200/80">
+                  <div className="text-slate-400 text-[11px] mb-1 font-semibold uppercase">Delivery Window</div>
+                  <div className="text-[14px] text-slate-600 font-medium">
+                    {activeQuote.offer?.deliveryWindow || '3–5 Business Days'}
+                  </div>
+                  <div className="text-slate-400 text-[11px] mt-0.5">
+                    To {activeQuote.deliveryLocation}
+                  </div>
+                </div>
+              </div>
+
+              {/* Guarantee line in Teal with shield icon directly above Confirm Order */}
+              <div className="pt-2 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="flex items-center space-x-2 text-xs text-[#0ea5e9] font-medium">
+                  <ShieldCheck className="w-4 h-4 text-[#0ea5e9] shrink-0" />
+                  <span>
+                    Backed by our Delivery Guarantee — if it doesn't match this grade, we make it right.
+                  </span>
+                </div>
+
+                {/* Confirm Order CTA (solid Navy button) + Ask a Question link */}
+                <div className="flex items-center space-x-4">
+                  <button
+                    onClick={() => setQuestionPanelOpen(true)}
+                    className="text-xs text-slate-600 hover:text-[#0f1115] underline cursor-pointer"
+                  >
+                    Ask a Question
+                  </button>
+
+                  {activeQuote.status === 'offer_ready' ? (
+                    <button
+                      onClick={handleConfirmOrder}
+                      className="w-full sm:w-auto bg-[#0f1115] hover:bg-[#0284c7] text-white font-semibold text-xs sm:text-sm px-6 py-3 rounded-xl transition-all shadow-xs cursor-pointer active:scale-98"
+                    >
+                      Confirm Order
+                    </button>
+                  ) : (
+                    <span className="text-xs font-semibold text-emerald-700 bg-emerald-50 px-3 py-1.5 rounded-xl border border-emerald-200 flex items-center gap-1.5">
+                      <Check className="w-3.5 h-3.5" />
+                      <span>Order Confirmed</span>
+                    </span>
+                  )}
+                </div>
+              </div>
+
+            </div>
+          </div>
+        )}
+
+        {/* ======================================================================= */}
+        {/* 4. STAGE 3 — ORDER STATUS (Appears Once Confirmed)                      */}
+        {/* ======================================================================= */}
+        {isStageConfirmedOrHigher && (
+          <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-6 sm:p-8 space-y-6">
+            <div>
+              {/* Header: "Track Your Order" */}
+              <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-[#0f1115]">
+                Track Your Order
+              </h2>
+              {/* Reassurance line */}
+              <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
+                We'll notify you at every step — no need to check in.
+              </p>
+            </div>
+
+            {/* Vertical timeline: Quote Received → Sourcing → Offer Confirmed → In Transit → Delivered */}
+            <div className="relative pl-6 space-y-8 before:absolute before:left-2.5 before:top-2 before:bottom-2 before:w-0.5 before:bg-slate-200">
+              {[
+                {
+                  id: 'quote_received',
+                  label: 'Quote Received',
+                  time: activeQuote.requestDate,
+                  desc: 'Specification verified and entered into matching index.',
+                },
+                {
+                  id: 'sourcing',
+                  label: 'Sourcing & Grading Completed',
+                  time: 'Sep 13, 10:15 AM',
+                  desc: '3D LiDAR density mesh and XRF assay report generated.',
+                },
+                {
+                  id: 'offer_confirmed',
+                  label: 'Offer Confirmed',
+                  time: 'Sep 13, 02:40 PM',
+                  desc: 'Proforma locked. Escrow funds secured via Razorpay.',
+                },
+                {
+                  id: 'in_transit',
+                  label: 'In Transit',
+                  time: activeQuote.status === 'in_transit' || activeQuote.status === 'delivered' ? 'Dispatched' : 'Pending dispatch',
+                  desc: 'Electronic weighbridge slip verified and container sealed.',
+                },
+                {
+                  id: 'delivered',
+                  label: 'Delivered',
+                  time: activeQuote.status === 'delivered' ? 'Completed' : 'Estimated 2 days',
+                  desc: 'Destination CFS gate scan and digital weigh-in verified.',
+                },
+              ].map((stage, idx) => {
+                const isCurrent = (activeQuote.status === 'confirmed' && stage.id === 'offer_confirmed') || activeQuote.status === stage.id;
+                const isDone = (activeQuote.status === 'confirmed' && (stage.id === 'quote_received' || stage.id === 'sourcing')) || (activeQuote.status === 'in_transit' && stage.id !== 'delivered') || activeQuote.status === 'delivered';
+
+                return (
+                  <div key={stage.id} className="relative group">
+                    {/* Dot on timeline: Filled Teal for done, hollow Navy outline for current, gray for upcoming */}
+                    <div
+                      className={`absolute -left-[27px] top-1 w-4 h-4 rounded-full border-2 transition-all ${
+                        isDone
+                          ? 'bg-[#0ea5e9] border-[#0ea5e9]'
+                          : isCurrent
+                          ? 'bg-white border-[#0f1115] ring-4 ring-slate-100'
+                          : 'bg-white border-slate-300'
+                      }`}
+                    >
+                      {isDone && <Check className="w-2.5 h-2.5 text-white mx-auto mt-0.5" />}
                     </div>
 
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs">
-                      {/* Order Confirmation ID */}
-                      <div className="bg-white p-3 rounded-xl border border-slate-200/80">
-                        <span className="text-slate-400 text-[11px] block">Order Confirmation ID</span>
-                        <strong className="font-mono text-slate-900 text-xs sm:text-sm font-bold">
-                          {q.orderConfirmation.orderId}
-                        </strong>
-                        <span className="text-[10px] text-slate-500 block mt-0.5">
-                          Booked: {q.orderConfirmation.confirmedAt}
+                    <div>
+                      <div className="flex items-center space-x-2">
+                        <span className={`text-sm font-bold ${isCurrent ? 'text-[#0f1115]' : isDone ? 'text-slate-800' : 'text-slate-400'}`}>
+                          {stage.label}
                         </span>
-                      </div>
-
-                      {/* Escrow Status */}
-                      <div className="bg-white p-3 rounded-xl border border-slate-200/80">
-                        <span className="text-slate-400 text-[11px] block">Razorpay Escrow Status</span>
-                        <strong className="text-emerald-700 text-xs sm:text-sm font-semibold flex items-center gap-1">
-                          <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-                          <span>{q.orderConfirmation.escrowStatus}</span>
-                        </strong>
-                        <span className="text-[10px] text-slate-500 block mt-0.5">
-                          Node: {q.orderConfirmation.escrowNodeId}
-                        </span>
-                      </div>
-
-                      {/* Commercial Pricing */}
-                      <div className="bg-white p-3 rounded-xl border border-slate-200/80">
-                        <span className="text-slate-400 text-[11px] block">Contract Valuation</span>
-                        <strong className="text-slate-900 text-xs sm:text-sm font-bold">
-                          ${q.targetPricePerTon.toLocaleString()} / ton
-                        </strong>
-                        <span className="text-[10px] text-slate-500 block mt-0.5">
-                          Total: ${(q.totalEstimatedAmount).toLocaleString()} ({q.quantityTons} Tons)
-                        </span>
-                      </div>
-
-                      {/* Port & Logistics */}
-                      <div className="bg-white p-3 rounded-xl border border-slate-200/80">
-                        <span className="text-slate-400 text-[11px] block">Destination Logistics</span>
-                        <strong className="text-slate-900 text-xs font-semibold truncate block">
-                          {q.destinationPort}
-                        </strong>
-                        <span className="text-[10px] text-slate-500 block mt-0.5">
-                          Incoterm: {q.incoterm}
-                          {q.orderConfirmation.eta && ` • ETA: ${q.orderConfirmation.eta}`}
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* Additional Tracking / Assay details bar */}
-                    <div className="mt-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-slate-600 pt-3 border-t border-slate-200/60">
-                      <div className="flex items-center gap-3">
-                        <span className="inline-flex items-center gap-1 text-[11px] bg-sky-50 text-[#0284c7] px-2.5 py-1 rounded-lg border border-sky-100 font-medium">
-                          <span>XRF Assay:</span>
-                          <strong>{q.orderConfirmation.assayPurity}</strong>
-                          <span className="text-slate-400 font-mono">({q.orderConfirmation.assayReportId})</span>
-                        </span>
-
-                        {q.orderConfirmation.weighbridgeSlipNumber && (
-                          <span className="hidden sm:inline-flex items-center gap-1 text-[11px] text-slate-500">
-                            <span>Weighbridge Slip:</span>
-                            <strong className="font-mono text-slate-700">{q.orderConfirmation.weighbridgeSlipNumber}</strong>
+                        {isCurrent && (
+                          <span className="text-[10px] font-semibold text-[#0ea5e9] bg-sky-50 px-2 py-0.5 rounded-full border border-sky-100">
+                            Current Stage
                           </span>
                         )}
                       </div>
-
-                      <div className="flex items-center gap-2">
-                        {onOpenContactUs && (
-                          <button
-                            onClick={onOpenContactUs}
-                            className="text-[11px] text-slate-600 hover:text-[#0284c7] hover:underline font-medium cursor-pointer"
-                          >
-                            Contact Escrow Desk
-                          </button>
-                        )}
-                        <span className="text-slate-300">|</span>
-                        <span className="text-[11px] text-slate-400">
-                          Protected by Razorpay Nodal Escrow
-                        </span>
+                      <div className="text-[11px] text-slate-500 font-mono mt-0.5">
+                        {stage.time}
+                      </div>
+                      <div className="text-xs text-slate-500 mt-1">
+                        {stage.desc}
                       </div>
                     </div>
-
                   </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
+        {/* ======================================================================= */}
+        {/* 5. ASK A QUESTION (Lightweight thread, persistent from Stage 2 onward)   */}
+        {/* ======================================================================= */}
+        {isStageOfferOrHigher && (
+          <div className="bg-white rounded-3xl border border-slate-200 overflow-hidden shadow-2xs">
+            <button
+              onClick={() => setQuestionPanelOpen(!questionPanelOpen)}
+              className="w-full p-5 sm:p-6 flex items-center justify-between text-left hover:bg-slate-50/70 transition-colors cursor-pointer"
+            >
+              <div className="flex items-center space-x-3">
+                <div className="w-9 h-9 rounded-xl bg-sky-50 text-[#0ea5e9] flex items-center justify-center">
+                  <MessageSquare className="w-4 h-4" />
                 </div>
-              );
-            })}
+                <div>
+                  <h3 className="text-sm font-bold text-[#0f1115]">
+                    Questions About This Order
+                  </h3>
+                  <p className="text-xs text-slate-500">
+                    Ask about grading, delivery timing, or anything else…
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center space-x-2 text-xs text-slate-400">
+                <span>{(activeQuote.messages || []).length} messages</span>
+                {questionPanelOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+              </div>
+            </button>
+
+            {questionPanelOpen && (
+              <div className="px-5 sm:px-6 pb-6 pt-2 border-t border-slate-100 space-y-4">
+                {/* Message bubbles */}
+                <div className="space-y-3 max-h-60 overflow-y-auto pr-1">
+                  {(activeQuote.messages || [
+                    {
+                      id: 'default-welcome',
+                      sender: 'team',
+                      text: `Hello! Our metallurgical desk is actively managing order #${activeQuote.orderNumber}. Feel free to drop any questions about spectrography or freight.`,
+                      timestamp: 'Today, 10:20 AM',
+                    },
+                  ]).map((msg) => (
+                    <div
+                      key={msg.id}
+                      className={`flex ${msg.sender === 'buyer' ? 'justify-end' : 'justify-start'}`}
+                    >
+                      {msg.sender === 'team' && (
+                        <div className="w-7 h-7 rounded-full bg-[#0f1115] text-white flex items-center justify-center text-[10px] font-bold mr-2 shrink-0 self-end mb-1">
+                          WM
+                        </div>
+                      )}
+                      <div
+                        className={`max-w-[75%] rounded-2xl px-4 py-2.5 text-xs leading-relaxed ${
+                          msg.sender === 'buyer'
+                            ? 'bg-slate-100 text-slate-900 rounded-br-xs'
+                            : 'bg-white text-slate-800 border border-slate-200 rounded-bl-xs shadow-2xs'
+                        }`}
+                      >
+                        <div>{msg.text}</div>
+                        <div className="text-[10px] text-slate-400 mt-1 text-right font-mono">
+                          {msg.timestamp}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Input form */}
+                <form onSubmit={handleSendQuestion} className="flex items-center gap-2 pt-2">
+                  <input
+                    type="text"
+                    value={newQuestionText}
+                    onChange={(e) => setNewQuestionText(e.target.value)}
+                    placeholder="Ask about grading, delivery timing, or anything else…"
+                    className="flex-1 bg-slate-50 border border-slate-200 focus:border-[#0ea5e9] focus:bg-white rounded-xl px-4 py-2.5 text-xs text-slate-900 outline-none transition-all"
+                  />
+                  <button
+                    type="submit"
+                    disabled={!newQuestionText.trim()}
+                    className="bg-[#0f1115] hover:bg-[#0284c7] disabled:opacity-40 text-white px-5 py-2.5 rounded-xl text-xs font-semibold transition-all cursor-pointer shrink-0 shadow-2xs"
+                  >
+                    Send
+                  </button>
+                </form>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ======================================================================= */}
+        {/* 6. SHARE THIS QUOTE MODAL                                               */}
+        {/* ======================================================================= */}
+        {shareModalOpen && (
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
+            <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-200 animate-in zoom-in-95 duration-200">
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+                <div className="flex items-center space-x-2.5">
+                  <div className="w-9 h-9 rounded-xl bg-sky-50 text-[#0ea5e9] flex items-center justify-center">
+                    <Share2 className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-bold text-slate-900">Share with a colleague</h3>
+                    <p className="text-[11px] text-slate-500">
+                      Anyone with this link can view (not edit) this quote.
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setShareModalOpen(false)}
+                  className="text-slate-400 hover:text-slate-700 p-1.5 rounded-full hover:bg-slate-100 transition-colors cursor-pointer"
+                >
+                  ✕
+                </button>
+              </div>
+
+              <div className="mt-4">
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  Private Quote Link
+                </label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    readOnly
+                    value={`${window.location.origin}/quotes/${activeQuote.id}`}
+                    className="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-mono text-slate-600 outline-none truncate"
+                  />
+                  <button
+                    onClick={handleCopyShareLink}
+                    className="bg-[#0f1115] hover:bg-[#0284c7] text-white text-xs font-semibold px-4 py-2 rounded-xl transition-all flex items-center space-x-1.5 cursor-pointer shrink-0"
+                  >
+                    {copiedLink ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+                    <span>{copiedLink ? 'Copied' : 'Copy'}</span>
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
         )}
 

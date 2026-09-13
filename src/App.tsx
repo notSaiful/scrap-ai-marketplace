@@ -215,39 +215,49 @@ function MarketplaceContent() {
       const itemGrade = submittedData.item?.grade || 'Grade A';
       const orderId = `WM-ORD-${Math.floor(1000 + Math.random() * 9000)}`;
 
+      const pricePerTon = submittedData.targetPrice || submittedData.item?.pricePerTon || 1850;
+      const totalAmount = pricePerTon * qty;
+      const deliveryLoc = submittedData.destinationPort || 'Bengaluru, Karnataka';
+
       const newQuote: BuyerQuoteEnquiry = {
         id: `quote-${Date.now()}`,
-        orderNumber: `WM-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`,
-        requestTitle: `Requested: ${qty} tons ${itemTitle}, Grade ${itemGrade} · ${todayStr}`,
+        orderNumber: `WM-${Math.floor(1000 + Math.random() * 9000)}`,
+        requestTitle: `Requested: ${qty} tons ${itemTitle}, Grade ${itemGrade} · ${deliveryLoc.split(',')[0]} · ${todayStr}`,
         materialName: itemTitle,
         grade: itemGrade,
         quantityTons: qty,
+        deliveryLocation: deliveryLoc,
         requestDate: todayStr,
-        targetPricePerTon: submittedData.targetPrice || submittedData.item?.pricePerTon || 1850,
-        totalEstimatedAmount: (submittedData.targetPrice || submittedData.item?.pricePerTon || 1850) * qty,
-        destinationPort: submittedData.destinationPort || 'Nhava Sheva (JNPT), Mumbai',
-        incoterm: submittedData.incoterm || 'CIF',
         productImage: submittedData.item?.primaryImage || 'https://images.unsplash.com/photo-1504917599217-d4dc5ebe6122?auto=format&fit=crop&w=800&q=80',
-        supplierName: submittedData.item?.supplier?.name || 'Hindalco Verified Partner Yard',
-        supplierOrigin: submittedData.item?.origin || 'Gujarat, India',
-        status: 'sourcing',
-        statusSteps: {
-          sourcing: { date: 'Today (Just now)', details: 'Quote RFQ broadcasted to verified yards. Spectrographic assay scheduled.', done: true },
-          confirmed: { date: 'Pending yard lock', details: 'Razorpay Escrow authorization & booking confirmation', done: false },
-          inTransit: { date: 'Pending dispatch', details: 'Electronic weighbridge slip & multi-seal container dispatch', done: false },
-          delivered: { date: 'Estimated 3-5 days', details: 'Destination customs clearance & payment disbursement', done: false },
+        status: 'offer_ready',
+        offer: {
+          pricePerTon: pricePerTon > 1000 ? Math.round(pricePerTon * 83) : 41500,
+          totalAmount: (pricePerTon > 1000 ? Math.round(pricePerTon * 83) : 41500) * qty,
+          deliveryWindow: '3–5 Business Days (Guaranteed Dispatch)',
+          batchPhoto: submittedData.item?.primaryImage || 'https://images.unsplash.com/photo-1504917599217-d4dc5ebe6122?auto=format&fit=crop&w=1200&q=80',
+          aiGradeReport: {
+            purityScore: submittedData.item?.aiSpecs?.purityScore || 98.8,
+            spectrographicSummary: submittedData.item?.aiSpecs?.spectrographicSummary || '3D LiDAR laser scan + XRF elemental purity assay certified.',
+            densityRating: 'High-Density Bulk Charge (ISRI Compliant)',
+            verifiedDate: todayStr,
+          },
+          supplierName: submittedData.item?.supplier?.name || 'Tata Steel Verified Partner Yard',
+          supplierOrigin: submittedData.item?.origin || 'Jamshedpur, India',
         },
-        orderConfirmation: {
-          orderId,
-          confirmedAt: 'In Progress (Sourcing)',
-          escrowStatus: 'Razorpay Escrow Funded',
-          escrowNodeId: `rzp_node_${Math.random().toString(36).substring(2, 9)}`,
-          assayReportId: `XRF-PENDING-${Math.floor(1000 + Math.random() * 9000)}`,
-          assayPurity: submittedData.item?.aiSpecs?.purityScore ? `${submittedData.item.aiSpecs.purityScore}% Verified` : '99.2% Target',
-          carrier: 'WasteMarket Freight Line',
-          eta: 'Estimated 3-5 Business Days',
+        timeline: {
+          quoteReceivedAt: `${todayStr}, 09:30 AM`,
+          sourcingStartedAt: `${todayStr}, 10:15 AM`,
+          offerConfirmedAt: `${todayStr}, 02:40 PM`,
+          trackingCarrier: 'CONCOR Multi-Modal Logistics',
         },
-        buyerNotes: submittedData.notes || 'Immediate dispatch required. Assayed purity guaranteed.',
+        messages: [
+          {
+            id: 'init-1',
+            sender: 'team',
+            text: `Hello! We've prepared and verified your graded quote for ${qty} tons of ${itemTitle}. Let us know if you need any adjustments or proceed to Confirm Order.`,
+            timestamp: todayStr,
+          },
+        ],
       };
 
       setBuyerQuotes((prev) => {
@@ -371,7 +381,66 @@ function MarketplaceContent() {
           <QuotesPage
             quotes={buyerQuotes}
             onGoHome={handleGoHome}
-            onOpenNewRFQ={() => handleOpenRFQ()}
+            onOpenNewRFQ={(defaultMaterial) => {
+              if (defaultMaterial) {
+                const matched = SCRAP_ITEMS.find(s => s.title.toLowerCase().includes(defaultMaterial.toLowerCase()));
+                handleOpenRFQ(matched);
+              } else {
+                handleOpenRFQ();
+              }
+            }}
+            onUpdateQuoteStatus={(quoteId, newStatus) => {
+              setBuyerQuotes((prev) => {
+                const updated = prev.map((q) => {
+                  if (q.id === quoteId) {
+                    return {
+                      ...q,
+                      status: newStatus,
+                      timeline: q.timeline || {
+                        quoteReceivedAt: q.requestDate,
+                        sourcingStartedAt: 'Today, 10:15 AM',
+                        offerConfirmedAt: 'Just now',
+                      },
+                    };
+                  }
+                  return q;
+                });
+                try {
+                  localStorage.setItem('wm_buyer_quotes', JSON.stringify(updated));
+                } catch (e) {
+                  console.error(e);
+                }
+                return updated;
+              });
+            }}
+            onAddQuoteMessage={(quoteId, text) => {
+              setBuyerQuotes((prev) => {
+                const updated = prev.map((q) => {
+                  if (q.id === quoteId) {
+                    const existing = q.messages || [];
+                    return {
+                      ...q,
+                      messages: [
+                        ...existing,
+                        {
+                          id: `msg-${Date.now()}`,
+                          sender: 'buyer' as const,
+                          text,
+                          timestamp: 'Just now',
+                        },
+                      ],
+                    };
+                  }
+                  return q;
+                });
+                try {
+                  localStorage.setItem('wm_buyer_quotes', JSON.stringify(updated));
+                } catch (e) {
+                  console.error(e);
+                }
+                return updated;
+              });
+            }}
             onOpenContactUs={handleOpenContactUs}
           />
         ) : (
