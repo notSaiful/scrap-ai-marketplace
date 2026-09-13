@@ -5,6 +5,7 @@ import { StickySearchBar } from './components/StickySearchBar';
 import { ImageMatchModal } from './components/ImageMatchModal';
 import { TrustStrip } from './components/TrustStrip';
 import { HowItWorks } from './components/HowItWorks';
+import { WhoItsFor } from './components/WhoItsFor';
 import { CategoriesPage } from './components/CategoriesPage';
 import { ScrapCard } from './components/ScrapCard';
 import { ProductDetailPage } from './components/ProductDetailPage';
@@ -424,6 +425,12 @@ function MarketplaceContent() {
 
             {/* How It Works (3 steps) */}
             <HowItWorks onOpenRFQ={() => handleOpenRFQ()} />
+
+            {/* Who It's For: Built for Businesses That Buy in Bulk */}
+            <WhoItsFor
+              onOpenRFQ={() => handleOpenRFQ()}
+              onExploreCatalog={() => handleOpenCategoriesPage('all')}
+            />
 
             {/* Mission & Why Businesses Trust wastemarket Section */}
             <MarketlyMissionSection
