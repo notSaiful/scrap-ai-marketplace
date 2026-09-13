@@ -318,6 +318,7 @@ function MarketplaceContent() {
             item={selectedScrapItem}
             onBack={() => setSelectedScrapItem(null)}
             onOpenRFQ={(item, qty) => handleOpenRFQ(item, qty)}
+            onSelectRelatedItem={(item) => setSelectedScrapItem(item)}
           />
         ) : currentPage === 'advisor' ? (
           /* Dedicated AI Metallurgical Advisor Page */

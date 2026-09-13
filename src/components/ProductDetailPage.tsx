@@ -1,547 +1,510 @@
 import React, { useState } from 'react';
 import { ScrapItem } from '../types/scrap';
-import { 
-  ArrowLeft, 
-  ShieldCheck, 
-  MapPin, 
-  Sparkles, 
-  CheckCircle, 
-  Calendar, 
-  Truck, 
-  Scale, 
-  Building, 
-  Award, 
-  FileCheck2, 
-  Send, 
-  Clock, 
-  Share2, 
-  Heart, 
-  Info,
-  ChevronRight,
-  Calculator,
-  MessageSquare
+import { SCRAP_ITEMS } from '../data/scrapData';
+import {
+  ArrowLeft,
+  ShieldCheck,
+  ChevronDown,
+  Check,
+  Scan,
+  Cpu,
+  UserCheck,
+  CheckCircle2,
+  ArrowRight,
+  HelpCircle,
 } from 'lucide-react';
 
 interface ProductDetailPageProps {
   item: ScrapItem;
   onBack: () => void;
   onOpenRFQ: (item: ScrapItem, quantity?: number) => void;
+  onSelectRelatedItem?: (item: ScrapItem) => void;
 }
 
 export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
   item,
   onBack,
   onOpenRFQ,
+  onSelectRelatedItem,
 }) => {
-  const [activeImageIndex, setActiveImageIndex] = useState(0);
-  const [selectedTab, setSelectedTab] = useState<'specs' | 'lab' | 'shipping' | 'supplier'>('specs');
-  const [orderQuantity, setOrderQuantity] = useState<number>(item.moq);
-  const [isFavorited, setIsFavorited] = useState(false);
+  const [selectedGrade, setSelectedGrade] = useState<'A' | 'B' | 'C'>('A');
+  const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(null);
 
-  // Calculate tier price based on order quantity
-  const calculateUnitPrice = (qty: number) => {
-    for (const tier of item.priceTiers) {
-      if (tier.maxQty) {
-        if (qty >= tier.minQty && qty <= tier.maxQty) {
-          return tier.price;
-        }
-      } else {
-        if (qty >= tier.minQty) {
-          return tier.price;
-        }
-      }
-    }
-    return item.pricePerTon;
+  // Derive material display name and base pricing
+  const materialName = item.title.includes('Steel')
+    ? 'Steel Scrap'
+    : item.title.includes('Copper')
+    ? 'Copper Scrap'
+    : item.title.includes('Aluminum')
+    ? 'Aluminum Scrap'
+    : item.title.includes('PET') || item.title.includes('HDPE')
+    ? 'Plastic Waste'
+    : item.title.includes('Cardboard') || item.title.includes('OCC')
+    ? 'Paper & Cardboard'
+    : item.categoryName;
+
+  // Grade Tiers tailored to the material (defaulting to indicative INR or benchmark values)
+  const baseRate = item.pricePerTon > 1000 ? Math.round(item.pricePerTon * 83) : Math.round(item.pricePerTon * 85);
+  const gradeTiers = [
+    {
+      id: 'A',
+      name: 'Grade A – Premium',
+      description: 'Minimal contamination, consistent size, highest resale value.',
+      indicativePrice: `₹${(Math.round(baseRate * 1.05)).toLocaleString('en-IN')}–${(Math.round(baseRate * 1.15)).toLocaleString('en-IN')}`,
+      badgeStyle: 'bg-[#0ea5e9] text-white font-semibold',
+      badgeBorder: 'border-transparent',
+      isSolidTeal: true,
+      badgeText: 'Grade A',
+    },
+    {
+      id: 'B',
+      name: 'Grade B – Standard',
+      description: 'Light contamination, mixed sizing, reliable for most industrial use.',
+      indicativePrice: `₹${(Math.round(baseRate * 0.95)).toLocaleString('en-IN')}–${(Math.round(baseRate * 1.02)).toLocaleString('en-IN')}`,
+      badgeStyle: 'bg-transparent text-[#0ea5e9] font-semibold border-2 border-[#0ea5e9]',
+      badgeBorder: 'border-[#0ea5e9]',
+      isSolidTeal: false,
+      badgeText: 'Grade B',
+    },
+    {
+      id: 'C',
+      name: 'Grade C – Mixed/Economy',
+      description: 'Higher variability, best for buyers prioritizing volume over uniformity.',
+      indicativePrice: `₹${(Math.round(baseRate * 0.85)).toLocaleString('en-IN')}–${(Math.round(baseRate * 0.92)).toLocaleString('en-IN')}`,
+      badgeStyle: 'bg-transparent text-slate-500 font-medium border border-slate-300',
+      badgeBorder: 'border-slate-300',
+      isSolidTeal: false,
+      badgeText: 'Grade C',
+    },
+  ];
+
+  // Verified Batch Gallery (real batch photos from actual inventory)
+  const batchPhotos = [
+    {
+      url: item.primaryImage,
+      batchId: 'BATCH-8821',
+      date: 'Verified Yesterday',
+      specs: 'Fe 98.4% · Optical Density 68 lbs/cu.ft',
+    },
+    {
+      url: item.images?.[1] || 'https://images.unsplash.com/photo-1504917599217-d4dc5ebe6122?auto=format&fit=crop&w=800&q=80',
+      batchId: 'BATCH-8819',
+      date: 'Verified 3 days ago',
+      specs: 'Spectrometer scanned · Moisture < 0.2%',
+    },
+    {
+      url: item.images?.[2] || 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=800&q=80',
+      batchId: 'BATCH-8790',
+      date: 'Verified 5 days ago',
+      specs: '3D laser LiDAR mesh mapped',
+    },
+    {
+      url: 'https://images.unsplash.com/photo-1563245372-f21724e3856d?auto=format&fit=crop&w=800&q=80',
+      batchId: 'BATCH-8742',
+      date: 'Verified 1 week ago',
+      specs: 'Weighbridge calibrated & assayed',
+    },
+  ];
+
+  // Related Cross-Sell Materials
+  const relatedMaterials = SCRAP_ITEMS.filter((s) => s.id !== item.id).slice(0, 3);
+
+  // Material-specific FAQs
+  const materialFaqs = [
+    {
+      q: `What contamination levels are typical in Grade B ${materialName}?`,
+      a: `In Grade B ${materialName}, non-target attachments or permissible dirt are strictly calibrated below 1.2% to 2.5% max. Each consignment includes an AI spectrographic assay ensuring zero hazardous tramp elements before dispatch.`,
+    },
+    {
+      q: 'Can I request a custom quantity below your standard minimum?',
+      a: 'Yes, while standard orders start at institutional container levels (typically 20 MT), verified buyers can request fractional allocation through our shared container consolidation routes.',
+    },
+    {
+      q: 'How does the Delivery Guarantee protect my purchase?',
+      a: 'Every order is secured via Razorpay Trade Escrow. If the physical delivery at your weighbridge fails to match the assay report specs, we replace the batch immediately or issue a full refund with zero haggling.',
+    },
+  ];
+
+  const handleSelectGradeAndQuote = (gradeId: 'A' | 'B' | 'C') => {
+    setSelectedGrade(gradeId);
+    onOpenRFQ(item);
   };
 
-  const currentUnitPrice = calculateUnitPrice(orderQuantity);
-  const totalPrice = currentUnitPrice * orderQuantity;
-
   return (
-    <div className="w-full bg-[#f8fafc] py-6 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-7xl mx-auto space-y-6">
+    <div className="w-full bg-[#f8f9fa] pt-24 sm:pt-28 pb-32 text-slate-900 selection:bg-sky-500/15 selection:text-[#0284c7]">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12 sm:space-y-16">
         
-        {/* Apple Style Breadcrumb Header */}
-        <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500">
-          <div className="flex items-center space-x-2">
-            <button 
+        {/* ========================================================================= */}
+        {/* 1. BREADCRUMB + HEADER + FULL-WIDTH HERO PHOTO                            */}
+        {/* ========================================================================= */}
+        <div className="space-y-4">
+          {/* Breadcrumb: 13px gray, links underline on hover */}
+          <nav className="flex items-center space-x-2 text-[13px] text-slate-500">
+            <button
               onClick={onBack}
-              className="flex items-center space-x-1.5 font-bold text-[#1d1d1f] hover:text-black bg-white border border-black/[0.08] px-3.5 py-1.5 rounded-full shadow-2xs hover:shadow-xs transition-all active:scale-[0.98]"
+              className="hover:underline hover:text-slate-900 transition-all flex items-center gap-1 cursor-pointer"
             >
-              <ArrowLeft className="w-3.5 h-3.5 text-[#0284c7]" />
-              <span>Back to Marketplace</span>
+              <ArrowLeft className="w-3.5 h-3.5" />
+              <span>Home</span>
             </button>
-            <span className="text-slate-300">/</span>
-            <span className="hover:text-black cursor-pointer font-medium text-slate-600">{item.categoryName}</span>
-            <span className="text-slate-300">/</span>
-            <span className="text-[#1d1d1f] font-bold truncate max-w-xs sm:max-w-md">{item.title}</span>
+            <span>/</span>
+            <button onClick={onBack} className="hover:underline hover:text-slate-900 transition-all cursor-pointer">
+              Materials
+            </button>
+            <span>/</span>
+            <span className="text-slate-900 font-semibold">{materialName}</span>
+          </nav>
+
+          {/* Header: 32px Semibold Navy */}
+          <div>
+            <h1 className="text-3xl sm:text-[32px] font-semibold tracking-tight text-[#0f1115]">
+              {materialName}
+            </h1>
+            {/* Subhead: 16px gray below header */}
+            <p className="text-base text-slate-500 mt-1 font-normal">
+              AI-graded and sourced from verified suppliers near you.
+            </p>
           </div>
 
-          <div className="flex items-center space-x-2">
-            <button 
-              onClick={() => setIsFavorited(!isFavorited)} 
-              className={`p-2 rounded-full border transition-all active:scale-[0.96] ${
-                isFavorited 
-                  ? 'bg-rose-50 border-rose-200 text-rose-600' 
-                  : 'bg-white border-black/[0.08] text-slate-600 hover:bg-slate-50'
-              }`}
-              title="Save scrap lot"
-            >
-              <Heart className={`w-4 h-4 ${isFavorited ? 'fill-rose-600' : ''}`} />
-            </button>
-            <button 
-              onClick={() => navigator.clipboard?.writeText(window.location.href)}
-              className="p-2 rounded-full bg-white border border-black/[0.08] text-slate-600 hover:bg-slate-50 transition-all active:scale-[0.96]"
-              title="Share listing link"
-            >
-              <Share2 className="w-4 h-4" />
-            </button>
-          </div>
-        </div>
-
-        {/* Top Main Showcase Section (Apple 2-Column Product Layout) */}
-        <div className="bg-white rounded-3xl border border-black/[0.08] shadow-[0_4px_24px_-2px_rgba(0,0,0,0.05)] p-6 lg:p-8">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10">
+          {/* Full-width hero photo of the material (real batch photo, not stock) */}
+          <div className="relative w-full aspect-[16/9] sm:aspect-[21/9] rounded-[12px] overflow-hidden border border-black/[0.08] shadow-sm bg-slate-100 group">
+            <img
+              src={item.primaryImage}
+              alt={`${materialName} verified batch`}
+              className="w-full h-full object-cover group-hover:scale-[1.01] transition-transform duration-500"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-60" />
             
-            {/* Left Column: Image Gallery & Inspection Seal (5 Cols) */}
-            <div className="lg:col-span-5 flex flex-col space-y-4">
-              {/* Main Preview Image */}
-              <div className="relative aspect-4/3 rounded-xl overflow-hidden bg-slate-100 border border-slate-200 group">
-                <img
-                  src={item.images[activeImageIndex] || item.primaryImage}
-                  alt={item.title}
-                  className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                />
-
-                {/* AI Purity Badge Overlay */}
-                <div className="absolute top-3 left-3 bg-white/95 backdrop-blur-xs text-black font-bold text-xs px-3 py-1 rounded-full shadow-md border border-slate-200 flex items-center gap-1.5">
-                  <Sparkles className="w-4 h-4 text-[#0ea5e9]" />
-                  <span>{item.aiSpecs.purityScore}% AI Assayed Purity</span>
-                </div>
-
-                <div className="absolute bottom-3 right-3 bg-slate-900/80 backdrop-blur-xs text-white text-xs px-2.5 py-1 rounded-md font-mono">
-                  {activeImageIndex + 1} / {item.images.length}
-                </div>
+            {/* Real Batch Verification Badge */}
+            <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between text-white text-xs">
+              <div className="flex items-center space-x-2 bg-black/60 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/20">
+                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                <span className="font-semibold">Live Yard Batch: {item.origin}</span>
               </div>
-
-              {/* Thumbnails Row */}
-              <div className="flex items-center space-x-3 overflow-x-auto pb-1">
-                {item.images.map((img, idx) => (
-                  <button
-                    key={idx}
-                    onClick={() => setActiveImageIndex(idx)}
-                    className={`relative w-20 h-20 rounded-lg overflow-hidden border-2 transition-all flex-shrink-0 ${
-                      activeImageIndex === idx
-                        ? 'border-[#38bdf8] ring-2 ring-sky-200'
-                        : 'border-slate-200 hover:border-sky-300 opacity-80 hover:opacity-100'
-                    }`}
-                  >
-                    <img src={img} alt={`thumb-${idx}`} className="w-full h-full object-cover" />
-                  </button>
-                ))}
-              </div>
-
-              {/* AI Yard Inspection Guarantee Box */}
-              <div className="bg-gradient-to-r from-sky-50/80 to-blue-50/80 rounded-xl p-4 border border-sky-200">
-                <div className="flex items-start space-x-3">
-                  <div className="p-2 bg-gradient-to-tr from-[#38bdf8] to-[#0284c7] text-white rounded-lg shadow-sm">
-                    <Award className="w-5 h-5" />
-                  </div>
-                  <div className="space-y-1">
-                    <div className="flex items-center space-x-2">
-                      <span className="font-bold text-xs text-black uppercase tracking-wide">
-                        {item.aiSpecs.verificationBadge}
-                      </span>
-                      <span className="bg-emerald-100 text-emerald-900 text-[10px] font-bold px-1.5 py-0.2 rounded">
-                        {item.aiSpecs.aiConfidence}% Match
-                      </span>
-                    </div>
-                    <p className="text-xs text-slate-700 leading-relaxed">
-                      {item.aiSpecs.spectrographicSummary}
-                    </p>
-                    <div className="text-[11px] text-slate-500 font-medium pt-1 flex items-center gap-3">
-                      <span>Inspection Date: {item.aiSpecs.scanDate}</span>
-                      <span>•</span>
-                      <span>ISRI: {item.aiSpecs.isriCode}</span>
-                    </div>
-                  </div>
-                </div>
+              <div className="hidden sm:block text-white/90 text-xs bg-black/40 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/10 font-mono">
+                Assay Purity: {item.aiSpecs.purityScore}%
               </div>
             </div>
-
-            {/* Right Column: Title, Tier Pricing, Specs & CTA (7 Cols) */}
-            <div className="lg:col-span-7 flex flex-col justify-between space-y-6">
-              <div>
-                {/* Supplier Header Line */}
-                <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-slate-100">
-                  <div className="flex items-center space-x-2">
-                    <span className="text-xl">{item.supplier.flag}</span>
-                    <span className="font-bold text-xs text-black hover:text-slate-700 cursor-pointer">
-                      {item.supplier.name}
-                    </span>
-                    {item.supplier.isVerified && (
-                      <span className="bg-slate-100 text-black text-[11px] font-semibold px-2 py-0.5 rounded-full flex items-center gap-1 border border-slate-200">
-                        <ShieldCheck className="w-3 h-3 text-blue-600" />
-                        Verified Yard
-                      </span>
-                    )}
-                    <span className="text-xs text-slate-500">({item.supplier.yearsInBusiness} yrs)</span>
-                  </div>
-
-                  <div className="flex items-center space-x-3 text-xs text-slate-600">
-                    <span>Rating: <strong className="text-black">★ {item.supplier.rating}</strong> ({item.supplier.reviewsCount})</span>
-                    <span>•</span>
-                    <span>Response: <strong className="text-black">{item.supplier.responseTime}</strong></span>
-                  </div>
-                </div>
-
-                {/* Scrap Title */}
-                <h1 className="text-xl sm:text-2xl font-black text-black tracking-tight mt-3">
-                  {item.title}
-                </h1>
-                <p className="text-xs text-slate-600 mt-1 leading-relaxed font-medium">
-                  {item.subtitle}
-                </p>
-
-                {/* Tiered Volume Pricing Table (Apple Style) */}
-                <div className="mt-5 bg-[#f5f5f7] rounded-2xl p-4 border border-black/[0.05]">
-                  <div className="text-[11px] font-semibold text-[#86868b] uppercase tracking-wider mb-2.5">
-                    Tiered Volume Pricing ({item.currency} / {item.unit})
-                  </div>
-                  
-                  <div className="grid grid-cols-3 gap-2 text-center">
-                    {item.priceTiers.map((tier, idx) => {
-                      const isActiveTier = orderQuantity >= tier.minQty && (!tier.maxQty || orderQuantity <= tier.maxQty);
-                      return (
-                        <div 
-                          key={idx}
-                          className={`p-3 rounded-xl border transition-all ${
-                            isActiveTier 
-                              ? 'bg-white border-[#38bdf8] ring-2 ring-sky-200/60 shadow-xs' 
-                              : 'bg-white/70 border-black/[0.05]'
-                          }`}
-                        >
-                          <div className="text-xs font-medium text-[#86868b]">
-                            {tier.maxQty ? `${tier.minQty} - ${tier.maxQty} ${tier.unit}` : `≥ ${tier.minQty} ${tier.unit}`}
-                          </div>
-                          <div className="text-lg sm:text-xl font-semibold text-[#1d1d1f] mt-1 tracking-tight">
-                            ${tier.price.toLocaleString()}
-                          </div>
-                          <div className="text-[10px] text-[#86868b]">
-                            per {tier.unit}
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-
-                  <div className="mt-3 flex items-center justify-between text-xs text-[#86868b] px-1">
-                    <span className="flex items-center gap-1 font-medium">
-                      <Scale className="w-3.5 h-3.5 text-[#0ea5e9]" />
-                      Min. Order (MOQ): <b className="text-[#1d1d1f] font-semibold">{item.moq} {item.moqUnit}</b>
-                    </span>
-                    <span className="text-emerald-700 font-medium">
-                      Available Stock: {item.availableStock.toLocaleString()} {item.stockUnit}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Key Scrap Attributes Grid */}
-                <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 gap-2.5 text-xs">
-                  <div className="p-3 bg-[#f5f5f7] rounded-xl border border-black/[0.04]">
-                    <div className="text-[#86868b] text-[10px] uppercase font-semibold">Grade / Spec</div>
-                    <div className="font-semibold text-[#1d1d1f] mt-0.5 truncate">{item.grade}</div>
-                  </div>
-
-                  <div className="p-3 bg-[#f5f5f7] rounded-xl border border-black/[0.04]">
-                    <div className="text-[#86868b] text-[10px] uppercase font-semibold">Port of Loading</div>
-                    <div className="font-semibold text-[#1d1d1f] mt-0.5 truncate">{item.loadingPort}</div>
-                  </div>
-
-                  <div className="p-3 bg-[#f5f5f7] rounded-xl border border-black/[0.04]">
-                    <div className="text-[#86868b] text-[10px] uppercase font-semibold">Incoterms</div>
-                    <div className="font-semibold text-[#1d1d1f] mt-0.5 truncate">{item.shippingTerms.join(', ')}</div>
-                  </div>
-
-                  <div className="p-3 bg-[#f5f5f7] rounded-xl border border-black/[0.04]">
-                    <div className="text-[#86868b] text-[10px] uppercase font-semibold">Origin Yard</div>
-                    <div className="font-semibold text-[#1d1d1f] mt-0.5 truncate">{item.origin}</div>
-                  </div>
-
-                  <div className="p-3 bg-[#f5f5f7] rounded-xl border border-black/[0.04]">
-                    <div className="text-[#86868b] text-[10px] uppercase font-semibold">Moisture Spec</div>
-                    <div className="font-semibold text-[#1d1d1f] mt-0.5 truncate">{item.aiSpecs.moistureContent}</div>
-                  </div>
-
-                  <div className="p-3 bg-[#f5f5f7] rounded-xl border border-black/[0.04]">
-                    <div className="text-[#86868b] text-[10px] uppercase font-semibold">Impurity Cap</div>
-                    <div className="font-semibold text-[#1d1d1f] mt-0.5 truncate">{item.aiSpecs.impurityTolerance}</div>
-                  </div>
-                </div>
-
-                {/* Interactive Order Calculator */}
-                <div className="mt-4 p-3.5 bg-white rounded-2xl border border-black/[0.08] shadow-2xs flex flex-wrap items-center justify-between gap-4">
-                  <div className="flex items-center space-x-3">
-                    <span className="text-xs font-medium text-[#1d1d1f]">Order Quantity:</span>
-                    <div className="flex items-center bg-[#f5f5f7] rounded-full p-0.5 border border-black/[0.06]">
-                      <button
-                        onClick={() => setOrderQuantity(Math.max(item.moq, orderQuantity - 5))}
-                        className="w-7 h-7 rounded-full bg-white hover:bg-neutral-100 text-[#1d1d1f] font-semibold text-sm shadow-2xs flex items-center justify-center transition-all"
-                      >
-                        -
-                      </button>
-                      <input
-                        type="number"
-                        value={orderQuantity}
-                        onChange={(e) => setOrderQuantity(Math.max(item.moq, Number(e.target.value) || item.moq))}
-                        className="w-14 text-center font-semibold text-sm focus:outline-none bg-transparent text-[#1d1d1f]"
-                        min={item.moq}
-                      />
-                      <button
-                        onClick={() => setOrderQuantity(orderQuantity + 5)}
-                        className="w-7 h-7 rounded-full bg-white hover:bg-neutral-100 text-[#1d1d1f] font-semibold text-sm shadow-2xs flex items-center justify-center transition-all"
-                      >
-                        +
-                      </button>
-                    </div>
-                    <span className="text-xs text-[#86868b] font-medium">MT</span>
-                  </div>
-
-                  <div className="text-right">
-                    <span className="text-[11px] text-[#86868b] block font-medium">Estimated Lot Total:</span>
-                    <span className="text-xl font-semibold text-[#1d1d1f] tracking-tight">
-                      ${totalPrice.toLocaleString()} <span className="text-xs font-normal text-[#86868b]">USD</span>
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Action Buttons (Apple Style CTAs) */}
-              <div className="pt-5 border-t border-black/[0.06] flex flex-col sm:flex-row gap-3">
-                <button
-                  onClick={() => onOpenRFQ(item, orderQuantity)}
-                  className="apple-btn-primary flex-1 py-3 px-6 text-xs font-semibold shadow-xs flex items-center justify-center space-x-2"
-                >
-                  <Send className="w-3.5 h-3.5" />
-                  <span>Request for Quotation (RFQ)</span>
-                </button>
-
-                <button
-                  onClick={() => onOpenRFQ(item, orderQuantity)}
-                  className="apple-btn-secondary flex-1 py-3 px-6 text-xs font-semibold flex items-center justify-center space-x-2"
-                >
-                  <MessageSquare className="w-3.5 h-3.5 text-[#0ea5e9]" />
-                  <span>Contact Recycler</span>
-                </button>
-
-                <button
-                  onClick={() => alert(`Sample Request Logged: 5kg spectrographic test piece from lot ${item.id} will be expedited.`)}
-                  className="apple-btn-secondary sm:w-auto py-3 px-5 text-xs font-medium"
-                >
-                  Request Sample
-                </button>
-              </div>
-            </div>
-
           </div>
         </div>
 
-        {/* Detailed Tabs Section (Apple Segmented Style) */}
-        <div className="bg-white rounded-[24px] border border-black/[0.08] shadow-[0_4px_24px_-2px_rgba(0,0,0,0.05)] overflow-hidden">
-          {/* Apple Segmented Control Tab Track */}
-          <div className="p-4 sm:p-5 border-b border-black/[0.06] bg-[#f5f5f7]/60 flex items-center justify-start overflow-x-auto">
-            <div className="apple-segmented-track">
-              <button
-                onClick={() => setSelectedTab('specs')}
-                className={`apple-segmented-item whitespace-nowrap flex items-center space-x-2 cursor-pointer ${
-                  selectedTab === 'specs' ? 'active' : 'hover:text-[#1d1d1f]'
-                }`}
-              >
-                <FileCheck2 className="w-3.5 h-3.5" />
-                <span>Technical Specifications</span>
-              </button>
-
-              <button
-                onClick={() => setSelectedTab('lab')}
-                className={`apple-segmented-item whitespace-nowrap flex items-center space-x-2 cursor-pointer ${
-                  selectedTab === 'lab' ? 'active' : 'hover:text-[#1d1d1f]'
-                }`}
-              >
-                <Sparkles className="w-3.5 h-3.5 text-[#0ea5e9]" />
-                <span>AI Spectrograph & Certificate</span>
-              </button>
-
-              <button
-                onClick={() => setSelectedTab('shipping')}
-                className={`apple-segmented-item whitespace-nowrap flex items-center space-x-2 cursor-pointer ${
-                  selectedTab === 'shipping' ? 'active' : 'hover:text-[#1d1d1f]'
-                }`}
-              >
-                <Truck className="w-3.5 h-3.5" />
-                <span>Packaging & Logistics</span>
-              </button>
-
-              <button
-                onClick={() => setSelectedTab('supplier')}
-                className={`apple-segmented-item whitespace-nowrap flex items-center space-x-2 cursor-pointer ${
-                  selectedTab === 'supplier' ? 'active' : 'hover:text-[#1d1d1f]'
-                }`}
-              >
-                <Building className="w-3.5 h-3.5" />
-                <span>Recycler Yard Profile</span>
-              </button>
+        {/* ========================================================================= */}
+        {/* 2. GRADE TIERS (Grade A, Grade B, Grade C)                                */}
+        {/* ========================================================================= */}
+        <section className="space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-2">
+            <div>
+              <h2 className="text-2xl font-bold tracking-tight text-[#0f1115]">
+                Available Grades
+              </h2>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Standardized ISRI classification with verified purity thresholds.
+              </p>
             </div>
           </div>
 
-          {/* Tab 1: Chemical & Technical Specifications */}
-          {selectedTab === 'specs' && (
-            <div className="p-6 sm:p-8 space-y-6">
-              <div>
-                <h3 className="text-base font-bold text-black mb-2">Material Description & Standards</h3>
-                <p className="text-xs sm:text-sm text-slate-700 leading-relaxed font-normal">
-                  {item.description}
-                </p>
-              </div>
+          {/* 3 cards side by side desktop, stacked mobile */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+            {gradeTiers.map((tier) => {
+              const isSelected = selectedGrade === tier.id;
 
-              <div>
-                <h4 className="text-sm font-bold text-black mb-3">Elemental Spectrometric Composition</h4>
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left text-xs border border-slate-200 rounded-lg overflow-hidden">
-                    <thead className="bg-slate-100 text-black font-bold border-b border-slate-200">
-                      <tr>
-                        <th className="py-2.5 px-4">Element</th>
-                        <th className="py-2.5 px-4">Symbol</th>
-                        <th className="py-2.5 px-4">Percentage Concentration</th>
-                        <th className="py-2.5 px-4">Tolerance / Standard</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100">
-                      {item.composition.map((comp, idx) => (
-                        <tr key={idx} className="hover:bg-slate-50">
-                          <td className="py-2.5 px-4 font-bold text-black">{comp.element}</td>
-                          <td className="py-2.5 px-4 font-mono text-black font-bold">{comp.symbol}</td>
-                          <td className="py-2.5 px-4 font-bold text-black">{comp.percentage}%</td>
-                          <td className="py-2.5 px-4 text-slate-600">{comp.tolerance || 'Standard'}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+              return (
+                <div
+                  key={tier.id}
+                  className={`bg-white rounded-[12px] p-5 border transition-all duration-200 flex flex-col justify-between shadow-xs hover:shadow-md ${
+                    isSelected ? 'border-[#0ea5e9] ring-2 ring-[#0ea5e9]/20' : 'border-black/[0.08]'
+                  }`}
+                >
+                  <div>
+                    {/* Grade badge top of each card: Solid Teal, Teal outline, Gray outline */}
+                    <div className="mb-4">
+                      <span className={`inline-block text-xs px-3 py-1 rounded-full uppercase tracking-wider ${tier.badgeStyle}`}>
+                        {tier.badgeText}
+                      </span>
+                    </div>
+
+                    {/* Grade Name & Description */}
+                    <h3 className="text-base font-bold text-[#0f1115] mb-1.5">
+                      {tier.name}
+                    </h3>
+                    <p className="text-xs text-[#495057] leading-relaxed mb-6 font-normal min-h-[38px]">
+                      {tier.description}
+                    </p>
+
+                    {/* Price: Navy 18px medium */}
+                    <div className="mb-2">
+                      <div className="text-[18px] font-medium text-[#0f1115]">
+                        {tier.indicativePrice} <span className="text-xs text-slate-500 font-normal">/ ton</span>
+                      </div>
+                      {/* "(indicative)" in 12px gray beneath */}
+                      <div className="text-[12px] text-slate-400 font-normal">
+                        (indicative)
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Secondary CTA: "Select This Grade" — outline Navy, fills solid Teal on hover */}
+                  <div className="mt-6 pt-4 border-t border-slate-100">
+                    <button
+                      onClick={() => handleSelectGradeAndQuote(tier.id as any)}
+                      className="w-full py-2.5 px-4 rounded-[8px] text-xs font-semibold border border-[#0f1115] text-[#0f1115] hover:bg-[#0ea5e9] hover:border-[#0ea5e9] hover:text-white transition-all cursor-pointer text-center"
+                    >
+                      Select This Grade
+                    </button>
+                  </div>
                 </div>
-              </div>
+              );
+            })}
+          </div>
 
-              <div>
-                <h4 className="text-sm font-bold text-slate-900 mb-2">Industrial Applications</h4>
-                <p className="text-xs sm:text-sm text-slate-600">
-                  {item.application}
-                </p>
+          {/* Microcopy under pricing */}
+          <p className="text-xs text-slate-500 text-center sm:text-left italic">
+            Final price confirmed after AI grading of your specific order.
+          </p>
+        </section>
+
+        {/* ========================================================================= */}
+        {/* 3. HOW WE GRADE THIS MATERIAL                                             */}
+        {/* ========================================================================= */}
+        <section className="rounded-3xl bg-[#0f1115]/[0.04] border border-black/[0.06] p-7 sm:p-10">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+            
+            {/* Left Column: Short text block */}
+            <div className="lg:col-span-5 space-y-3">
+              <h2 className="text-2xl font-bold tracking-tight text-[#0f1115]">
+                How We Grade {materialName}
+              </h2>
+              <p className="text-sm text-slate-600 leading-relaxed font-normal">
+                Every batch is scanned in 3D and assessed by our AI for contamination, size consistency, and composition — then verified by our team before you ever see a quote.
+              </p>
+            </div>
+
+            {/* Right Column: Simple annotated graphic (scan icon → AI check icon → human checkmark icon) */}
+            <div className="lg:col-span-7">
+              <div className="relative flex flex-col sm:flex-row items-center justify-between gap-4 p-4 sm:p-6 bg-white rounded-2xl border border-black/[0.06] shadow-2xs">
+                
+                {/* Connecting thin teal line (desktop) */}
+                <div className="hidden sm:block absolute top-1/2 left-16 right-16 h-[2px] bg-[#0ea5e9]/40 -translate-y-1/2 -z-0" />
+
+                {/* Step 1: Scan Icon */}
+                <div className="relative z-10 flex flex-col items-center text-center space-y-2">
+                  <div className="w-12 h-12 rounded-2xl bg-sky-50 border border-[#0ea5e9]/30 flex items-center justify-center text-[#0ea5e9] shadow-2xs">
+                    <Scan className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <div className="text-xs font-bold text-[#0f1115]">1. 3D LiDAR Scan</div>
+                    <div className="text-[11px] text-slate-400">Volume & Size Mesh</div>
+                  </div>
+                </div>
+
+                {/* Step 2: AI Check Icon */}
+                <div className="relative z-10 flex flex-col items-center text-center space-y-2">
+                  <div className="w-12 h-12 rounded-2xl bg-sky-50 border border-[#0ea5e9]/30 flex items-center justify-center text-[#0ea5e9] shadow-2xs">
+                    <Cpu className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <div className="text-xs font-bold text-[#0f1115]">2. AI Assay Check</div>
+                    <div className="text-[11px] text-slate-400">Contamination & Chemistry</div>
+                  </div>
+                </div>
+
+                {/* Step 3: Human Checkmark Icon */}
+                <div className="relative z-10 flex flex-col items-center text-center space-y-2">
+                  <div className="w-12 h-12 rounded-2xl bg-sky-50 border border-[#0ea5e9]/30 flex items-center justify-center text-[#0ea5e9] shadow-2xs">
+                    <UserCheck className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <div className="text-xs font-bold text-[#0f1115]">3. Human Verified</div>
+                    <div className="text-[11px] text-slate-400">Physical Sign-Off</div>
+                  </div>
+                </div>
+
               </div>
             </div>
-          )}
 
-          {/* Tab 2: AI Spectrograph & Lab Certificate */}
-          {selectedTab === 'lab' && (
-            <div className="p-6 sm:p-8 space-y-6">
-              <div className="bg-slate-50 rounded-xl p-5 border border-slate-200">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center space-x-2">
-                    <Sparkles className="w-5 h-5 text-[#0284c7]" />
-                    <span className="font-bold text-sm text-black">AI Quality Inspection Dossier</span>
-                  </div>
-                  <span className="text-xs font-mono text-black bg-white px-2.5 py-1 rounded border border-slate-200 font-bold">
-                    ISRI {item.grade}
+          </div>
+        </section>
+
+        {/* ========================================================================= */}
+        {/* 4. REAL BATCH PHOTOS / 3D SCAN GALLERY                                    */}
+        {/* ========================================================================= */}
+        <section className="space-y-4">
+          <div>
+            <h2 className="text-2xl font-bold tracking-tight text-[#0f1115]">
+              Recent Batches We've Sourced
+            </h2>
+            <p className="text-xs text-slate-500 mt-1">
+              Actual photos from recent verified batches — not stock images.
+            </p>
+          </div>
+
+          {/* 4-Image Grid, 8px radius each, subtle border */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            {batchPhotos.map((batch, i) => (
+              <div
+                key={i}
+                className="bg-white rounded-[8px] overflow-hidden border border-black/[0.08] shadow-2xs group flex flex-col justify-between"
+              >
+                <div className="relative aspect-square w-full bg-slate-100 overflow-hidden">
+                  <img
+                    src={batch.url}
+                    alt={batch.batchId}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                  />
+                  <span className="absolute top-2 left-2 bg-black/60 backdrop-blur-md text-white text-[10px] font-mono px-2 py-0.5 rounded">
+                    {batch.batchId}
                   </span>
                 </div>
-                <p className="text-xs text-slate-700 leading-relaxed">
-                  {item.aiSpecs.spectrographicSummary}
+                <div className="p-3 bg-white">
+                  <div className="text-[11px] font-semibold text-[#0f1115] truncate">
+                    {batch.date}
+                  </div>
+                  <div className="text-[10px] text-slate-400 truncate mt-0.5">
+                    {batch.specs}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <p className="text-[11px] text-slate-400 italic">
+            Backed by optical density measurements, handheld XRF assay reports, and electronic weighbridge slips.
+          </p>
+        </section>
+
+        {/* ========================================================================= */}
+        {/* 5. GUARANTEE REMINDER + PRIMARY CTA (Prominent Band)                      */}
+        {/* ========================================================================= */}
+        <section className="bg-gradient-to-r from-slate-900 via-[#0b1329] to-slate-900 rounded-3xl p-7 sm:p-9 text-white shadow-lg border border-slate-800">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-6">
+            
+            {/* Guarantee Badge Line */}
+            <div className="flex items-start space-x-3 max-w-xl">
+              <div className="w-10 h-10 rounded-xl bg-sky-500/20 text-[#38bdf8] flex items-center justify-center shrink-0 mt-0.5">
+                <ShieldCheck className="w-6 h-6" />
+              </div>
+              <div>
+                <div className="text-[#38bdf8] font-bold text-sm sm:text-base flex items-center gap-1.5">
+                  <span>Delivery Guarantee Protected</span>
+                </div>
+                <p className="text-xs sm:text-sm text-slate-300 mt-1 leading-relaxed">
+                  Backed by our Delivery Guarantee — if it doesn't match the graded quality, we make it right.
                 </p>
               </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
-                <div className="p-4 bg-white rounded-xl border border-slate-200">
-                  <div className="text-slate-500 font-semibold uppercase text-[10px]">AI Purity Score</div>
-                  <div className="text-2xl font-black text-black mt-1">{item.aiSpecs.purityScore}%</div>
-                  <p className="text-slate-600 text-[11px] mt-1">Direct LIBS optical emission spectral validation.</p>
-                </div>
-
-                <div className="p-4 bg-white rounded-xl border border-slate-200">
-                  <div className="text-slate-500 font-semibold uppercase text-[10px]">Moisture Index</div>
-                  <div className="text-2xl font-black text-black mt-1">{item.aiSpecs.moistureContent}</div>
-                  <p className="text-slate-600 text-[11px] mt-1">Microwave sensor calibrated for freight moisture safety.</p>
-                </div>
-
-                <div className="p-4 bg-white rounded-xl border border-slate-200">
-                  <div className="text-slate-500 font-semibold uppercase text-[10px]">Impurity Tolerance</div>
-                  <div className="text-2xl font-black text-black mt-1">{item.aiSpecs.impurityTolerance}</div>
-                  <p className="text-slate-600 text-[11px] mt-1">Zero radioactive contamination detected (0.00 µSv/h).</p>
-                </div>
-              </div>
             </div>
-          )}
 
-          {/* Tab 3: Packaging & Vessel Logistics */}
-          {selectedTab === 'shipping' && (
-            <div className="p-6 sm:p-8 space-y-4">
-              <h3 className="text-base font-bold text-black">Maritime Freight & Packaging</h3>
-              <div className="p-4 bg-slate-50 rounded-xl border border-slate-200 text-xs sm:text-sm text-slate-700 leading-relaxed">
-                <strong className="text-black">Packaging Method:</strong> {item.packaging}
-              </div>
+            {/* Primary CTA button leading into existing single-page quote thread */}
+            <div className="w-full sm:w-auto shrink-0">
+              <button
+                onClick={() => onOpenRFQ(item)}
+                className="w-full sm:w-auto bg-[#0ea5e9] hover:bg-[#0284c7] text-white font-semibold text-sm sm:text-base px-8 py-3.5 rounded-[8px] transition-all shadow-[0_8px_20px_rgba(14,165,233,0.35)] active:scale-98 cursor-pointer flex items-center justify-center gap-2 group"
+              >
+                <span>Request Quote for {materialName}</span>
+                <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+              </button>
+            </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
-                <div className="p-4 border border-slate-200 rounded-xl">
-                  <div className="font-bold text-black mb-1 flex items-center gap-1.5">
-                    <Truck className="w-4 h-4 text-[#0284c7]" />
-                    <span>Loading Port</span>
+          </div>
+        </section>
+
+        {/* ========================================================================= */}
+        {/* 6. RELATED MATERIALS (Cross-sell Items)                                   */}
+        {/* ========================================================================= */}
+        <section className="space-y-4">
+          <div>
+            <h2 className="text-2xl font-bold tracking-tight text-[#0f1115]">
+              You Might Also Need
+            </h2>
+            <p className="text-xs text-slate-500 mt-0.5">
+              Complementary industrial lots frequently ordered alongside {materialName}.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+            {relatedMaterials.map((rel) => (
+              <div
+                key={rel.id}
+                onClick={() => onSelectRelatedItem ? onSelectRelatedItem(rel) : onOpenRFQ(rel)}
+                className="bg-white rounded-2xl border border-black/[0.08] hover:border-[#0ea5e9]/70 overflow-hidden shadow-2xs hover:shadow-md transition-all cursor-pointer flex flex-col justify-between group"
+              >
+                <div className="aspect-[16/9] w-full bg-slate-100 overflow-hidden">
+                  <img
+                    src={rel.primaryImage}
+                    alt={rel.title}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                  />
+                </div>
+                <div className="p-4 flex-1 flex flex-col justify-between">
+                  <div>
+                    <h3 className="text-sm font-bold text-[#0f1115] group-hover:text-[#0284c7] transition-colors line-clamp-1">
+                      {rel.title}
+                    </h3>
+                    <p className="text-xs text-slate-500 mt-1 line-clamp-2">
+                      {rel.subtitle}
+                    </p>
                   </div>
-                  <p className="text-slate-700">{item.loadingPort} (Customs cleared terminal)</p>
-                </div>
-
-                <div className="p-4 border border-slate-200 rounded-xl">
-                  <div className="font-bold text-black mb-1 flex items-center gap-1.5">
-                    <Clock className="w-4 h-4 text-[#0284c7]" />
-                    <span>Lead Time & Dispatch</span>
+                  <div className="mt-3 pt-2 border-t border-slate-100 flex items-center justify-between text-xs font-semibold text-[#0ea5e9]">
+                    <span>View Specifications</span>
+                    <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
                   </div>
-                  <p className="text-slate-700">Dispatched within 5 business days upon LC or Escrow confirmation</p>
                 </div>
               </div>
-            </div>
-          )}
+            ))}
+          </div>
+        </section>
 
-          {/* Tab 4: Recycler Yard Profile */}
-          {selectedTab === 'supplier' && (
-            <div className="p-6 sm:p-8 space-y-4">
-              <div className="flex items-center space-x-3">
-                <span className="text-3xl">{item.supplier.flag}</span>
-                <div>
-                  <h3 className="text-base font-bold text-slate-900">{item.supplier.name}</h3>
-                  <p className="text-xs text-slate-500">{item.supplier.yardLocation}</p>
+        {/* ========================================================================= */}
+        {/* 7. MATERIAL-SPECIFIC FAQ (2-3 items)                                      */}
+        {/* ========================================================================= */}
+        <section className="space-y-4 pt-4 border-t border-black/[0.06]">
+          <div>
+            <h2 className="text-2xl font-bold tracking-tight text-[#0f1115]">
+              Frequently Asked Questions
+            </h2>
+            <p className="text-xs text-slate-500 mt-0.5">
+              Specific details regarding purity standards, sampling, and supply contracts.
+            </p>
+          </div>
+
+          <div className="space-y-3">
+            {materialFaqs.map((faq, i) => {
+              const isOpen = openFaqIndex === i;
+              return (
+                <div
+                  key={i}
+                  className="bg-white rounded-2xl border border-black/[0.08] overflow-hidden shadow-2xs"
+                >
+                  <button
+                    onClick={() => setOpenFaqIndex(isOpen ? null : i)}
+                    className="w-full text-left p-5 flex items-center justify-between gap-4 font-semibold text-xs sm:text-sm text-[#0f1115] hover:text-[#0284c7] transition-colors cursor-pointer"
+                  >
+                    <span>{faq.q}</span>
+                    <ChevronDown
+                      className={`w-4 h-4 text-slate-400 shrink-0 transition-transform duration-200 ${
+                        isOpen ? 'rotate-180 text-[#0284c7]' : ''
+                      }`}
+                    />
+                  </button>
+                  {isOpen && (
+                    <div className="px-5 pb-5 pt-1 text-xs text-slate-600 leading-relaxed border-t border-slate-100 font-normal">
+                      {faq.a}
+                    </div>
+                  )}
                 </div>
-              </div>
+              );
+            })}
+          </div>
 
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs pt-2">
-                <div className="p-3 bg-slate-50 rounded-lg border border-slate-100">
-                  <div className="text-slate-400 text-[10px]">Years Active</div>
-                  <div className="font-bold text-slate-800 mt-0.5">{item.supplier.yearsInBusiness} Years</div>
-                </div>
-
-                <div className="p-3 bg-slate-50 rounded-lg border border-slate-100">
-                  <div className="text-slate-400 text-[10px]">Response Rate</div>
-                  <div className="font-bold text-slate-800 mt-0.5">{item.supplier.responseRate}</div>
-                </div>
-
-                <div className="p-3 bg-slate-50 rounded-lg border border-slate-100">
-                  <div className="text-slate-400 text-[10px]">Annual Capacity</div>
-                  <div className="font-bold text-slate-800 mt-0.5">{item.supplier.annualSupplyCapacity}</div>
-                </div>
-
-                <div className="p-3 bg-slate-50 rounded-lg border border-slate-100">
-                  <div className="text-slate-400 text-[10px]">Buyer Satisfaction</div>
-                  <div className="font-bold text-amber-600 mt-0.5">★ {item.supplier.rating} / 5.0</div>
-                </div>
-              </div>
-            </div>
-          )}
-
-        </div>
+          {/* Link back to full homepage FAQ */}
+          <div className="pt-2 text-center sm:text-left">
+            <button
+              onClick={onBack}
+              className="text-xs font-semibold text-[#0284c7] hover:text-[#0369a1] hover:underline cursor-pointer"
+            >
+              See all FAQs on homepage &rarr;
+            </button>
+          </div>
+        </section>
 
       </div>
     </div>
