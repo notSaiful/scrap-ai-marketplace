@@ -48,9 +48,12 @@ export const AISearchBar: React.FC<AISearchBarProps> = ({
       {/* Overlaid Hero Content (Headline + Search Bar) */}
       <div className="relative z-10 w-full max-w-4xl mx-auto px-4 sm:px-6 text-center">
         {/* Hero Headline */}
-        <h1 className="text-3xl sm:text-5xl md:text-6xl font-bold tracking-tight text-white mb-6 sm:mb-8">
+        <h1 className="text-3xl sm:text-5xl md:text-6xl font-bold tracking-tight text-white mb-3 sm:mb-4">
           Bulk Scrap, Graded and Guaranteed.
         </h1>
+        <p className="text-base sm:text-lg text-white/80 font-normal mb-6 sm:mb-8 max-w-xl mx-auto drop-shadow-sm">
+          AI-verified quality. One fair price. Delivered on time — every time.
+        </p>
 
         <div 
           className={`relative bg-white/95 backdrop-blur-2xl rounded-2xl sm:rounded-full border transition-all duration-300 max-w-3xl mx-auto text-left ${
