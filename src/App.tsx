@@ -6,6 +6,7 @@ import { ImageMatchModal } from './components/ImageMatchModal';
 import { TrustStrip } from './components/TrustStrip';
 import { HowItWorks } from './components/HowItWorks';
 import { WhoItsFor } from './components/WhoItsFor';
+import { WhatWeSource } from './components/WhatWeSource';
 import { CategoriesPage } from './components/CategoriesPage';
 import { ScrapCard } from './components/ScrapCard';
 import { ProductDetailPage } from './components/ProductDetailPage';
@@ -430,6 +431,12 @@ function MarketplaceContent() {
             <WhoItsFor
               onOpenRFQ={() => handleOpenRFQ()}
               onExploreCatalog={() => handleOpenCategoriesPage('all')}
+            />
+
+            {/* What We Source: Materials We Source */}
+            <WhatWeSource
+              onSelectCategory={(cat) => handleOpenCategoriesPage(cat)}
+              onOpenContact={handleOpenContactUs}
             />
 
             {/* Mission & Why Businesses Trust wastemarket Section */}
