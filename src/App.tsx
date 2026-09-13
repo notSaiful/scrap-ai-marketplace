@@ -15,6 +15,7 @@ import { SCRAP_ITEMS } from './data/scrapData';
 import { ScrapItem } from './types/scrap';
 import { ArrowRight } from 'lucide-react';
 import { MarketlyFAQ } from './components/MarketlyFAQ';
+import { MarketlyMissionSection } from './components/MarketlyMissionSection';
 import { MarketlyNewsletter } from './components/MarketlyNewsletter';
 import { MarketlyFooter } from './components/MarketlyFooter';
 import { AIAdvisorPage } from './components/AIAdvisorPage';
@@ -538,6 +539,12 @@ function MarketplaceContent() {
 
             {/* How It Works (3 steps) */}
             <HowItWorks onOpenRFQ={() => handleOpenRFQ()} />
+
+            {/* Mission & Why Businesses Trust wastemarket Section */}
+            <MarketlyMissionSection
+              onOpenRFQ={() => handleOpenRFQ()}
+              onExploreLots={() => handleOpenCategoriesPage('all')}
+            />
 
             {/* FAQ Accordion Section (AK FAQ Framer Style) */}
             <MarketlyFAQ onOpenContactUs={handleOpenContactUs} />
