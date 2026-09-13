@@ -94,8 +94,8 @@ export const QuotesPage: React.FC<QuotesPageProps> = ({
   onUpdateQuoteStatus,
   onAddQuoteMessage,
 }) => {
-  // If activeQuoteId is set, view single evolving quote thread (/quotes/[id]), otherwise list view
-  const [activeQuoteId, setActiveQuoteId] = useState<string | null>(quotes.length > 0 ? quotes[0].id : null);
+  // Always default to list view (activeQuoteId = null) so user sees all quotes in order first, clicking any opens the thread
+  const [activeQuoteId, setActiveQuoteId] = useState<string | null>(null);
   const [requestDetailsExpanded, setRequestDetailsExpanded] = useState(false);
   const [questionPanelOpen, setQuestionPanelOpen] = useState(false);
   const [newQuestionText, setNewQuestionText] = useState('');
@@ -354,13 +354,14 @@ export const QuotesPage: React.FC<QuotesPageProps> = ({
         {/* 1. PAGE HEADER (Persistent Across All Stages)                           */}
         {/* ======================================================================= */}
         <div className="bg-white rounded-2xl border border-slate-200 p-4 sm:p-5 shadow-2xs flex flex-wrap items-center justify-between gap-4">
-          {/* Breadcrumb */}
-          <div className="flex items-center space-x-2 text-[13px] text-slate-500 min-w-0">
+          {/* Breadcrumb with Back button */}
+          <div className="flex items-center space-x-2.5 text-[13px] text-slate-500 min-w-0">
             <button
               onClick={() => setActiveQuoteId(null)}
-              className="hover:underline hover:text-slate-900 font-medium cursor-pointer shrink-0"
+              className="flex items-center space-x-1.5 font-bold text-[#0f1115] hover:text-[#0ea5e9] bg-slate-50 hover:bg-slate-100 border border-slate-200 px-3 py-1.5 rounded-xl shadow-2xs transition-all active:scale-[0.98] cursor-pointer"
             >
-              My Quotes
+              <ArrowLeft className="w-3.5 h-3.5 text-[#0ea5e9]" />
+              <span>All Quotes</span>
             </button>
             <span>/</span>
             <span className="text-slate-900 font-semibold truncate">
