@@ -19,10 +19,22 @@ import {
   Camera,
   Loader2,
   Trash2,
+  Settings,
+  Key,
+  KeyRound,
+  ExternalLink,
 } from 'lucide-react';
 import { SCRAP_ITEMS } from '../data/scrapData';
 import { ScrapItem } from '../types/scrap';
-import { queryOpenRouterRag } from '../services/openRouterService';
+import {
+  queryOpenRouterRag,
+  getSavedOpenRouterKey,
+  saveOpenRouterKey,
+  getSavedOpenRouterModel,
+  saveOpenRouterModel,
+  testOpenRouterConnection,
+  OPENROUTER_FREE_MODELS,
+} from '../services/openRouterService';
 
 export interface AIAdvisorPageProps {
   onBackToMarketplace: () => void;
@@ -59,75 +71,7 @@ const SUBTLE_STARTER_PROMPTS = [
   'High-purity copper wire scrap (>99.9% Cu)',
   'Heavy melting steel HMS 1/2 with CIF freight quote',
   'Clean aluminum 6063 extrusions for remelting',
-  'Drained lead-acid battery plates (ISRI Rains)',
-];
-
-const INITIAL_CHAT_SESSIONS: ChatSession[] = [
-  {
-    id: 'session-1',
-    title: 'High-purity copper scrap',
-    createdAt: '15:17',
-    timeLabel: 'Today',
-    messages: [
-      {
-        id: 'msg-1-user',
-        role: 'user',
-        text: 'High-purity copper scrap 99.9% with certified XRF assay',
-        timestamp: '15:17:02',
-      },
-      {
-        id: 'msg-1-ai',
-        role: 'assistant',
-        text: 'I analyzed 184 active yard scrap lots and found 3 verified furnace-ready copper scrap lots matching your purity specs. These results can go straight into inquiries with AI auto-chat — or tell me more about your target port and budget:',
-        timestamp: '15:17:07',
-        reasoningTime: '1.4s',
-        reasoningSteps: [
-          'Parsed metallurgical requirements: High-purity bare copper wire (>99.9% Cu)',
-          'Scanned 184 active yard scrap lots across verified maritime loading ports',
-          'Filtered 3 top-graded electrolytic millberry lots with certified XRF spectrography reports',
-          'Verified zero tramp enamel coating and active trade escrow coverage',
-        ],
-        recommendedLots: SCRAP_ITEMS.filter(s => s.category.includes('copper') || s.title.toLowerCase().includes('copper')).slice(0, 3),
-        suggestedFollowUps: [
-          'Compare landed CIF prices for these lots',
-          'Send proforma RFQ to EuroRecycle B.V.',
-          'Check moisture and packaging specifications',
-        ],
-      },
-    ],
-  },
-  {
-    id: 'session-2',
-    title: 'HMS 1/2 heavy melting steel',
-    createdAt: '11:42',
-    timeLabel: 'Yesterday',
-    messages: [
-      {
-        id: 'msg-2-user',
-        role: 'user',
-        text: 'HMS 1 and HMS 2 heavy melting steel 80:20 blend Rotterdam port',
-        timestamp: '11:42:10',
-      },
-      {
-        id: 'msg-2-ai',
-        role: 'assistant',
-        text: 'Found 3 verified maritime export lots of Heavy Melting Steel ready for foundry induction or EAF melting. Each batch includes authenticated SGS inspection certificates:',
-        timestamp: '11:42:15',
-        reasoningTime: '1.2s',
-        reasoningSteps: [
-          'Parsed ferrous melting criteria: ISRI 200-206 compliant heavy steel',
-          'Checked CIF loading schedules and Rotterdam port draft clearance',
-          'Ranked 3 verified bulk maritime yard suppliers with SGS assay reports',
-        ],
-        recommendedLots: SCRAP_ITEMS.filter(s => s.category.includes('steel') || s.title.toLowerCase().includes('steel') || s.title.toLowerCase().includes('hms')).slice(0, 3),
-        suggestedFollowUps: [
-          'Compare scrap thickness, tramp elements, and moisture discount',
-          'Request proforma invoice for 500 MT CIF Nhava Sheva',
-          'Inquire about LC at sight vs 30-day payment terms',
-        ],
-      },
-    ],
-  },
+  'OCC 11 cardboard bales specification and pricing',
 ];
 
 export const AIAdvisorPage: React.FC<AIAdvisorPageProps> = ({
@@ -137,7 +81,14 @@ export const AIAdvisorPage: React.FC<AIAdvisorPageProps> = ({
   onSelectScrapItem,
 }) => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [sessions, setSessions] = useState<ChatSession[]>(INITIAL_CHAT_SESSIONS);
+  const [sessions, setSessions] = useState<ChatSession[]>(() => {
+    try {
+      const saved = localStorage.getItem('wm_advisor_chat_sessions');
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
   const [inputPrompt, setInputPrompt] = useState('');
   const [selectedItemIds, setSelectedItemIds] = useState<Set<string>>(new Set());
@@ -146,8 +97,42 @@ export const AIAdvisorPage: React.FC<AIAdvisorPageProps> = ({
   const [copiedMsgId, setCopiedMsgId] = useState<string | null>(null);
   const [isThinking, setIsThinking] = useState(false);
 
+  // OpenRouter Settings Modal State
+  const [showSettingsModal, setShowSettingsModal] = useState(false);
+  const [openRouterKey, setOpenRouterKey] = useState<string>(() => getSavedOpenRouterKey());
+  const [openRouterModel, setOpenRouterModel] = useState<string>(() => getSavedOpenRouterModel());
+  const [testStatus, setTestStatus] = useState<{ testing: boolean; result?: { success: boolean; message: string } }>({ testing: false });
+  const [keySavedNotification, setKeySavedNotification] = useState(false);
+
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
+
+  // Sync sessions to localStorage
+  useEffect(() => {
+    try {
+      localStorage.setItem('wm_advisor_chat_sessions', JSON.stringify(sessions));
+    } catch (e) {
+      console.error(e);
+    }
+  }, [sessions]);
+
+  const handleSaveSettings = () => {
+    saveOpenRouterKey(openRouterKey);
+    saveOpenRouterModel(openRouterModel);
+    setKeySavedNotification(true);
+    setTimeout(() => setKeySavedNotification(false), 2500);
+    setShowSettingsModal(false);
+  };
+
+  const handleTestConnection = async () => {
+    setTestStatus({ testing: true });
+    try {
+      const res = await testOpenRouterConnection(openRouterKey, openRouterModel);
+      setTestStatus({ testing: false, result: res });
+    } catch (err: any) {
+      setTestStatus({ testing: false, result: { success: false, message: err.message || 'Connection failed' } });
+    }
+  };
 
   // Active session object
   const activeSession = useMemo(() => {
@@ -407,6 +392,22 @@ export const AIAdvisorPage: React.FC<AIAdvisorPageProps> = ({
               })}
             </div>
 
+            {/* Sidebar Bottom: OpenRouter Key & Model Config */}
+            <div className="pt-2 border-t border-slate-200/80 mt-2">
+              <button
+                onClick={() => setShowSettingsModal(true)}
+                className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-200/70 transition-colors cursor-pointer"
+              >
+                <div className="flex items-center space-x-2">
+                  <KeyRound className="w-3.5 h-3.5 text-[#0284c7]" />
+                  <span>OpenRouter AI Key</span>
+                </div>
+                <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${openRouterKey.trim() ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
+                  {openRouterKey.trim() ? 'Active' : 'Configure'}
+                </span>
+              </button>
+            </div>
+
           </div>
         ) : (
           /* Collapsed Icons Only */
@@ -424,6 +425,13 @@ export const AIAdvisorPage: React.FC<AIAdvisorPageProps> = ({
               title="View History"
             >
               <History className="w-5 h-5" />
+            </button>
+            <button
+              onClick={() => setShowSettingsModal(true)}
+              className="w-10 h-10 rounded-xl hover:bg-slate-200 flex items-center justify-center text-[#0284c7] transition-colors cursor-pointer"
+              title="OpenRouter Settings"
+            >
+              <KeyRound className="w-5 h-5" />
             </button>
           </div>
         )}
@@ -836,7 +844,141 @@ export const AIAdvisorPage: React.FC<AIAdvisorPageProps> = ({
           </div>
         </div>
 
+        {/* Key Saved Toast Notification */}
+        {keySavedNotification && (
+          <div className="absolute top-4 right-4 z-50 bg-emerald-600 text-white text-xs font-semibold px-4 py-2 rounded-xl shadow-lg flex items-center space-x-2 animate-in fade-in slide-in-from-top-2">
+            <Check className="w-4 h-4" />
+            <span>OpenRouter configuration saved!</span>
+          </div>
+        )}
+
       </main>
+
+      {/* ========================================================================= */}
+      {/* 4. OPENROUTER API KEY & REAL RAG CONFIGURATION MODAL                     */}
+      {/* ========================================================================= */}
+      {showSettingsModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-200 animate-in zoom-in-95 duration-200">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <div className="flex items-center space-x-2.5">
+                <div className="w-9 h-9 rounded-xl bg-sky-50 text-[#0284c7] flex items-center justify-center">
+                  <KeyRound className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-slate-900">OpenRouter AI Configuration</h3>
+                  <p className="text-xs text-slate-500">Real-time LLM inference & RAG</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowSettingsModal(false)}
+                className="text-slate-400 hover:text-slate-700 p-1.5 rounded-full hover:bg-slate-100 transition-colors cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="mt-4 space-y-4">
+              {/* API Key Input */}
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  OpenRouter API Key (Free)
+                </label>
+                <div className="relative">
+                  <input
+                    type="password"
+                    value={openRouterKey}
+                    onChange={(e) => setOpenRouterKey(e.target.value)}
+                    placeholder="sk-or-v1-..."
+                    className="w-full bg-slate-50 border border-slate-200 focus:border-[#0ea5e9] focus:bg-white rounded-xl px-3 py-2 text-xs font-mono text-slate-900 outline-none transition-all"
+                  />
+                </div>
+                <div className="flex items-center justify-between mt-1 text-[11px] text-slate-400">
+                  <span>Keys start with <code className="text-slate-600">sk-or-v1-</code></span>
+                  <a
+                    href="https://openrouter.ai/keys"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-[#0284c7] hover:underline flex items-center gap-1"
+                  >
+                    <span>Get free key</span>
+                    <ExternalLink className="w-3 h-3" />
+                  </a>
+                </div>
+              </div>
+
+              {/* Model Selector */}
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  Selected Free AI Model
+                </label>
+                <select
+                  value={openRouterModel}
+                  onChange={(e) => setOpenRouterModel(e.target.value)}
+                  className="w-full bg-slate-50 border border-slate-200 focus:border-[#0ea5e9] focus:bg-white rounded-xl px-3 py-2 text-xs text-slate-900 outline-none transition-all"
+                >
+                  {OPENROUTER_FREE_MODELS.map((m) => (
+                    <option key={m.id} value={m.id}>
+                      {m.name} ({m.provider})
+                    </option>
+                  ))}
+                </select>
+                <p className="text-[11px] text-slate-400 mt-1">
+                  Active free model with zero credit requirement.
+                </p>
+              </div>
+
+              {/* Test Status Banner */}
+              {testStatus.result && (
+                <div
+                  className={`p-3 rounded-xl text-xs font-medium border flex items-start gap-2 ${
+                    testStatus.result.success
+                      ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
+                      : 'bg-rose-50 border-rose-200 text-rose-800'
+                  }`}
+                >
+                  {testStatus.result.success ? (
+                    <Check className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                  ) : (
+                    <span className="text-rose-600 font-bold shrink-0">!</span>
+                  )}
+                  <span className="break-all">{testStatus.result.message}</span>
+                </div>
+              )}
+            </div>
+
+            {/* Actions */}
+            <div className="mt-6 flex items-center justify-between gap-2 pt-3 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={handleTestConnection}
+                disabled={testStatus.testing || !openRouterKey.trim()}
+                className="text-xs font-semibold px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors disabled:opacity-50 cursor-pointer flex items-center gap-1.5"
+              >
+                {testStatus.testing && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                <span>{testStatus.testing ? 'Testing...' : 'Test Connection'}</span>
+              </button>
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setShowSettingsModal(false)}
+                  className="text-xs font-semibold px-3 py-2 rounded-xl text-slate-500 hover:text-slate-800 transition-colors cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleSaveSettings}
+                  className="text-xs font-semibold px-5 py-2 rounded-xl bg-[#0284c7] hover:bg-[#0369a1] text-white transition-colors cursor-pointer shadow-xs"
+                >
+                  Save Settings
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );

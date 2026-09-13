@@ -32,6 +32,7 @@ export interface BuyerQuoteEnquiry {
   incoterm: string;
   supplierName: string;
   supplierOrigin: string;
+  productImage?: string;
   status: 'sourcing' | 'confirmed' | 'in_transit' | 'delivered';
   statusSteps: {
     sourcing: { date: string; details: string; done: boolean };
@@ -196,21 +197,42 @@ export const QuotesPage: React.FC<QuotesPageProps> = ({
                   {/* ========================================================= */}
                   {/* 1. QUOTE REQUEST MADE BY BUYER (Header)                    */}
                   {/* ========================================================= */}
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-5 border-b border-slate-100">
-                    <div>
-                      {/* Exact Requested Format Highlight */}
-                      <div className="text-base sm:text-lg font-bold text-slate-900 tracking-tight flex items-center gap-2">
-                        <span>{q.requestTitle}</span>
-                      </div>
-                      <div className="text-xs text-slate-500 mt-0.5 flex items-center gap-2">
-                        <span>Quote Ref: <strong className="font-mono text-slate-700">{q.orderNumber}</strong></span>
-                        <span>•</span>
-                        <span>Supplier: <strong>{q.supplierName}</strong> ({q.supplierOrigin})</span>
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-5 border-b border-slate-100">
+                    <div className="flex items-center gap-4">
+                      {q.productImage ? (
+                        <div className="relative w-16 h-16 sm:w-20 sm:h-20 rounded-2xl overflow-hidden border border-slate-200/80 shrink-0 shadow-2xs bg-slate-100">
+                          <img
+                            src={q.productImage}
+                            alt={q.materialName}
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                      ) : (
+                        <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-sky-50 border border-sky-100 flex items-center justify-center shrink-0 text-[#0284c7]">
+                          <FileText className="w-7 h-7" />
+                        </div>
+                      )}
+
+                      <div>
+                        {/* Exact Requested Format Highlight */}
+                        <div className="text-base sm:text-lg font-bold text-slate-900 tracking-tight flex items-center gap-2">
+                          <span>{q.requestTitle}</span>
+                        </div>
+                        <div className="text-xs text-slate-500 mt-1 flex flex-wrap items-center gap-2">
+                          <span>Lot: <strong className="text-slate-800 font-semibold">{q.materialName}</strong></span>
+                          <span>•</span>
+                          <span>Grade: <strong className="text-slate-800">{q.grade}</strong></span>
+                          <span>•</span>
+                          <span>Ref: <strong className="font-mono text-slate-700">{q.orderNumber}</strong></span>
+                        </div>
+                        <div className="text-[11px] text-slate-400 mt-0.5">
+                          Supplier: <strong className="text-slate-600">{q.supplierName}</strong> ({q.supplierOrigin})
+                        </div>
                       </div>
                     </div>
 
                     {/* Status Badge */}
-                    <div className="flex items-center space-x-2">
+                    <div className="flex items-center space-x-2 shrink-0 self-start sm:self-center">
                       <span
                         className={`text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider border ${
                           q.status === 'sourcing'

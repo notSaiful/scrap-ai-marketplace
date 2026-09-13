@@ -24,148 +24,18 @@ import { QuotesPage, BuyerQuoteEnquiry } from './components/QuotesPage';
 import { evaluateScrapsWithRag } from './services/ragEngine';
 import { ScrapRagResult } from './types/rag';
 
-const INITIAL_BUYER_QUOTES: BuyerQuoteEnquiry[] = [
-  {
-    id: 'quote-seed-1',
-    orderNumber: 'WM-2026-9281',
-    requestTitle: 'Requested: 5 tons Steel Scrap, Grade A · May 14, 2026',
-    materialName: 'Steel Scrap, Grade A (Heavy Melting Scrap HMS 1)',
-    grade: 'Grade A (ISRI 200/201)',
-    quantityTons: 5,
-    requestDate: 'May 14, 2026',
-    targetPricePerTon: 420,
-    totalEstimatedAmount: 2100,
-    destinationPort: 'Nhava Sheva (JNPT), Mumbai',
-    incoterm: 'CIF JNPT',
-    supplierName: 'Tata Steel Industrial Yards',
-    supplierOrigin: 'Jamshedpur, India',
-    status: 'delivered',
-    statusSteps: {
-      sourcing: { date: 'May 14, 2026 · 10:15 AM', details: 'Yard lot allocated; spark test & optical spectrometer verification completed (Fe > 98.4%).', done: true },
-      confirmed: { date: 'May 15, 2026 · 02:30 PM', details: 'Escrow funded via Razorpay Route; formal digital purchase order #WM-PO-8812 locked.', done: true },
-      inTransit: { date: 'May 17, 2026 · 11:00 AM', details: '20ft high-cube container loaded, weighbridge gross 5,020 kg verified, electronic tamper seal applied.', done: true },
-      delivered: { date: 'May 20, 2026 · 04:45 PM', details: 'Delivered to JNPT CFS yard. Buyer visual inspection & weigh-in verified; Escrow payment released.', done: true },
-    },
-    orderConfirmation: {
-      orderId: 'WM-ORD-9281',
-      confirmedAt: 'May 15, 2026',
-      escrowStatus: 'Disbursed to Yard',
-      escrowNodeId: 'rzp_escrow_settled_9281',
-      assayReportId: 'XRF-TATA-2026-081',
-      assayPurity: 'Fe 98.6% (ISRI Grade A Verified)',
-      weighbridgeSlipNumber: 'WB-JNPT-2026-5591',
-      carrier: 'Container Corporation of India (CONCOR)',
-      containerNumber: 'TGHU-918234-1',
-      eta: 'Delivered on May 20, 2026',
-    },
-    buyerNotes: 'Requires delivery before smelting batch cycle on May 22. Standard moisture deduction < 0.5%.',
-  },
-  {
-    id: 'quote-seed-2',
-    orderNumber: 'WM-2026-7492',
-    requestTitle: 'Requested: 22 tons Copper Millberry Scrap, Grade 1 (Berry) · May 18, 2026',
-    materialName: 'Bare Bright Copper Wire (Millberry)',
-    grade: 'Grade 1 Berry (ISRI)',
-    quantityTons: 22,
-    requestDate: 'May 18, 2026',
-    targetPricePerTon: 8950,
-    totalEstimatedAmount: 196900,
-    destinationPort: 'Mundra Port, Gujarat',
-    incoterm: 'CIF Mundra',
-    supplierName: 'Hindalco Authorized Recycler Network',
-    supplierOrigin: 'Dahej, Gujarat',
-    status: 'in_transit',
-    statusSteps: {
-      sourcing: { date: 'May 18, 2026 · 09:30 AM', details: 'Electrolytic copper bundle selected; Olympus Vanta XRF certified Cu 99.92%.', done: true },
-      confirmed: { date: 'May 19, 2026 · 03:20 PM', details: 'Multi-party escrow account credited. LC backed by SBI Commercial Bank.', done: true },
-      inTransit: { date: 'May 21, 2026 · 08:00 AM', details: 'Dispatched via Gujarat Maritime Logistics, GPS tracking ID #GML-8821 active. Vessel en-route.', done: true },
-      delivered: { date: 'Expected May 24, 2026', details: 'Pending dockside radiation sweep and customs release at Mundra Terminal 2.', done: false },
-    },
-    orderConfirmation: {
-      orderId: 'WM-ORD-7492',
-      confirmedAt: 'May 19, 2026',
-      escrowStatus: 'Milestone Locked',
-      escrowNodeId: 'rzp_escrow_hold_7492',
-      assayReportId: 'XRF-SPECTRO-9912',
-      assayPurity: 'Cu 99.92% (Pure Bright)',
-      weighbridgeSlipNumber: 'WB-DHJ-88190',
-      carrier: 'Maersk Regional Feeder Logistics',
-      containerNumber: 'MSKU-449102-8',
-      eta: 'May 24, 2026 (On schedule)',
-    },
-    buyerNotes: 'No burnt wire or enameled windings accepted. Strict copper bare bright millberry standard.',
-  },
-  {
-    id: 'quote-seed-3',
-    orderNumber: 'WM-2026-6105',
-    requestTitle: 'Requested: 15 tons Shredded Steel HMS 1, Grade ISRI 200 · Jun 02, 2026',
-    materialName: 'Heavy Melting Steel Scrap (HMS 1/2)',
-    grade: 'Grade ISRI 200 (1/4 inch min)',
-    quantityTons: 15,
-    requestDate: 'Jun 02, 2026',
-    targetPricePerTon: 395,
-    totalEstimatedAmount: 5925,
-    destinationPort: 'Chennai Port (CITPL)',
-    incoterm: 'FOB Yard',
-    supplierName: 'Jindal Ferrous Yard Hub',
-    supplierOrigin: 'Bellary, Karnataka',
-    status: 'confirmed',
-    statusSteps: {
-      sourcing: { date: 'Jun 02, 2026 · 11:45 AM', details: '15 tons prepared at rail siding; density verified at 65 lbs/cu ft.', done: true },
-      confirmed: { date: 'Jun 03, 2026 · 01:10 PM', details: 'Buyer accepted proforma invoice. Razorpay Escrow balance earmarked.', done: true },
-      inTransit: { date: 'Estimated Jun 06, 2026', details: 'Awaiting rake wagon placement at Bellary Freight Terminal.', done: false },
-      delivered: { date: 'Estimated Jun 09, 2026', details: 'Final discharge at Chennai Port gate 4.', done: false },
-    },
-    orderConfirmation: {
-      orderId: 'WM-ORD-6105',
-      confirmedAt: 'Jun 03, 2026',
-      escrowStatus: 'Razorpay Escrow Funded',
-      escrowNodeId: 'rzp_escrow_active_6105',
-      assayReportId: 'XRF-JINDAL-0034',
-      assayPurity: 'Fe 97.8% (ISRI 200)',
-      carrier: 'Indian Railways Freight (CONCOR rake)',
-      eta: 'Jun 09, 2026',
-    },
-    buyerNotes: 'Free of hollow cylinders and unpunctured gas canisters.',
-  },
-  {
-    id: 'quote-seed-4',
-    orderNumber: 'WM-2026-5082',
-    requestTitle: 'Requested: 8 tons Aluminum 6063 Extrusions, Grade Clean · Jun 10, 2026',
-    materialName: 'Aluminum 6063 Extrusions (T5/T6)',
-    grade: 'Clean / Unpainted (ISRI Tata)',
-    quantityTons: 8,
-    requestDate: 'Jun 10, 2026',
-    targetPricePerTon: 2280,
-    totalEstimatedAmount: 18240,
-    destinationPort: 'Nhava Sheva (JNPT), Mumbai',
-    incoterm: 'CIF JNPT',
-    supplierName: 'Century Metal Logistics',
-    supplierOrigin: 'Pune, Maharashtra',
-    status: 'sourcing',
-    statusSteps: {
-      sourcing: { date: 'Jun 10, 2026 · 04:15 PM', details: 'RFQ disseminated to 4 certified scrap recyclers in Pune Industrial Zone.', done: true },
-      confirmed: { date: 'Pending yard confirmation', details: 'Yard inspection & price lock within 12 business hours.', done: false },
-      inTransit: { date: 'Pending dispatch', details: 'Direct flatbed transport with electronic tarpaulin seals.', done: false },
-      delivered: { date: 'Estimated Jun 14, 2026', details: 'Destination weigh-in & chemical assay verification.', done: false },
-    },
-    orderConfirmation: {
-      orderId: 'WM-ORD-5082',
-      confirmedAt: 'In Progress (Sourcing)',
-      escrowStatus: 'Razorpay Escrow Funded',
-      escrowNodeId: 'rzp_escrow_prep_5082',
-      assayReportId: 'XRF-PENDING-5082',
-      assayPurity: 'Al > 98.5% Expected',
-      carrier: 'WasteMarket Priority Freight',
-      eta: 'Jun 14, 2026',
-    },
-    buyerNotes: 'Must be free of thermal breaks, iron screws, or heavy grease coating.',
-  },
-];
+const INITIAL_BUYER_QUOTES: BuyerQuoteEnquiry[] = [];
 
 function MarketplaceContent() {
   const [currentPage, setCurrentPage] = useState<'marketplace' | 'categories' | 'advisor' | 'contact' | 'quotes'>('marketplace');
-  const [buyerQuotes, setBuyerQuotes] = useState<BuyerQuoteEnquiry[]>(INITIAL_BUYER_QUOTES);
+  const [buyerQuotes, setBuyerQuotes] = useState<BuyerQuoteEnquiry[]>(() => {
+    try {
+      const saved = localStorage.getItem('wm_buyer_quotes');
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [selectedScrapItem, setSelectedScrapItem] = useState<ScrapItem | null>(null);
   const [rfqModalOpen, setRfqModalOpen] = useState(false);
@@ -310,10 +180,15 @@ function MarketplaceContent() {
   };
 
   const handleImageSearchTrigger = (scrapType: string) => {
+    if (scrapType === 'open-modal') {
+      setImageSearchModalOpen(true);
+      return;
+    }
     if (scrapType === 'copper') setSearchQuery('copper millberry');
     else if (scrapType === 'steel') setSearchQuery('HMS 1 steel');
-    else if (scrapType === 'pcb') setSearchQuery('telecom PCB');
-    else if (scrapType === 'pet') setSearchQuery('PET flakes');
+    else if (scrapType === 'aluminum') setSearchQuery('aluminum extrusion');
+    else if (scrapType === 'plastics' || scrapType === 'pet') setSearchQuery('PET flakes');
+    else if (scrapType === 'paper') setSearchQuery('OCC 11 cardboard');
     handleOpenCategoriesPage('all');
   };
 
@@ -349,6 +224,7 @@ function MarketplaceContent() {
         totalEstimatedAmount: (submittedData.targetPrice || submittedData.item?.pricePerTon || 1850) * qty,
         destinationPort: submittedData.destinationPort || 'Nhava Sheva (JNPT), Mumbai',
         incoterm: submittedData.incoterm || 'CIF',
+        productImage: submittedData.item?.primaryImage || 'https://images.unsplash.com/photo-1504917599217-d4dc5ebe6122?auto=format&fit=crop&w=800&q=80',
         supplierName: submittedData.item?.supplier?.name || 'Hindalco Verified Partner Yard',
         supplierOrigin: submittedData.item?.origin || 'Gujarat, India',
         status: 'sourcing',
@@ -364,14 +240,22 @@ function MarketplaceContent() {
           escrowStatus: 'Razorpay Escrow Funded',
           escrowNodeId: `rzp_node_${Math.random().toString(36).substring(2, 9)}`,
           assayReportId: `XRF-PENDING-${Math.floor(1000 + Math.random() * 9000)}`,
-          assayPurity: submittedData.item?.purity || '99.2% Target',
+          assayPurity: submittedData.item?.aiSpecs?.purityScore ? `${submittedData.item.aiSpecs.purityScore}% Verified` : '99.2% Target',
           carrier: 'WasteMarket Freight Line',
           eta: 'Estimated 3-5 Business Days',
         },
         buyerNotes: submittedData.notes || 'Immediate dispatch required. Assayed purity guaranteed.',
       };
 
-      setBuyerQuotes((prev) => [newQuote, ...prev]);
+      setBuyerQuotes((prev) => {
+        const updated = [newQuote, ...prev];
+        try {
+          localStorage.setItem('wm_buyer_quotes', JSON.stringify(updated));
+        } catch (e) {
+          console.error(e);
+        }
+        return updated;
+      });
     }
     setRfqModalOpen(false);
     setCurrentPage('quotes');
@@ -465,6 +349,7 @@ function MarketplaceContent() {
               setCurrentPage('advisor');
               window.scrollTo({ top: 0, behavior: 'smooth' });
             }}
+            onOpenImageMatch={() => setImageSearchModalOpen(true)}
           />
         ) : currentPage === 'contact' ? (
           /* Dedicated Razorpay-Compliant Contact Us Page with AI Support */
