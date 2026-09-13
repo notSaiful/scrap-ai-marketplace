@@ -99,10 +99,11 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
         {/* Modal Brand Header */}
         <div className="text-center mb-6">
-          <div className="inline-flex items-center justify-center w-11 h-11 rounded-2xl bg-gradient-to-tr from-[#38bdf8] via-[#0ea5e9] to-[#0284c7] text-white shadow-xs mb-3">
-            <span className="font-bold text-lg tracking-tight">W</span>
-            <Sparkles className="w-3 h-3 -ml-0.5 text-sky-100" />
-          </div>
+          <img 
+            src="/logo.png" 
+            alt="WasteMarket" 
+            className="w-12 h-12 object-contain mx-auto mb-3 rounded-xl shadow-xs" 
+          />
           <h2 className="text-2xl font-semibold text-[#1d1d1f] tracking-tight">
             {mode === 'signin' ? 'Welcome Back' : 'Create an Account'}
           </h2>

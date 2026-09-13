@@ -37,9 +37,11 @@ export const Header: React.FC<HeaderProps> = ({
         
         {/* Left: Brand Logo */}
         <div className="flex items-center space-x-2.5 cursor-pointer group" onClick={onGoHome}>
-          <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-[#38bdf8] via-[#0ea5e9] to-[#0284c7] text-white flex items-center justify-center font-bold text-sm shadow-[0_2px_10px_rgba(14,165,233,0.35)] group-hover:scale-[1.04] transition-transform duration-200">
-            W
-          </div>
+          <img 
+            src="/logo.png" 
+            alt="WasteMarket" 
+            className="w-8 h-8 object-contain rounded-lg shadow-xs group-hover:scale-[1.05] transition-transform duration-200" 
+          />
           <div className="flex items-center">
             <span className="text-base font-bold tracking-tight text-[#0f1115]">
               wastemarket<span className="bg-gradient-to-r from-[#38bdf8] to-[#0284c7] bg-clip-text text-transparent">.in</span>

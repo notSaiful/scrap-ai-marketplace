@@ -55,9 +55,11 @@ export const StickySearchBar: React.FC<StickySearchBarProps> = ({
           className="flex items-center space-x-2 pl-1 sm:pl-2 pr-2 py-1 rounded-full hover:bg-black/[0.04] transition-all group cursor-pointer shrink-0"
           title="wastemarket.in • Scroll to top"
         >
-          <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-gradient-to-tr from-[#38bdf8] via-[#0ea5e9] to-[#0284c7] text-white flex items-center justify-center font-bold text-xs shadow-xs group-hover:scale-105 transition-transform">
-            W
-          </div>
+          <img 
+            src="/logo.png" 
+            alt="WasteMarket" 
+            className="w-7 h-7 sm:w-8 sm:h-8 object-contain rounded-lg shadow-xs group-hover:scale-105 transition-transform" 
+          />
           <span className="text-xs font-bold text-[#0f1115] hidden sm:inline tracking-tight">
             wastemarket<span className="bg-gradient-to-r from-[#38bdf8] to-[#0284c7] bg-clip-text text-transparent">.in</span>
           </span>
