@@ -16,11 +16,11 @@ export const TrustStrip: React.FC = () => {
           {items.map((item, index) => (
             <div key={index} className="flex items-center space-x-2.5">
               {/* Teal checkmark icon */}
-              <div className="w-5 h-5 rounded-full bg-[#E9F7F2] text-[#1F9D74] flex items-center justify-center shrink-0">
+              <div className="w-5 h-5 rounded-full bg-[#E6F4F1] text-[#0D9488] flex items-center justify-center shrink-0">
                 <Check className="w-3.5 h-3.5 stroke-[2.5]" />
               </div>
-              {/* Navy 14px medium-weight text */}
-              <span className="text-[#0F2A47] text-sm font-medium tracking-tight">
+              {/* Navy 14-16px medium-weight text */}
+              <span className="text-[#0F2A47] text-sm sm:text-base font-medium tracking-tight">
                 {item}
               </span>
             </div>

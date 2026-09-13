@@ -40,8 +40,8 @@ export const HowItWorks: React.FC<HowItWorksProps> = () => {
         {/* 3-column layout desktop, stacked vertically on mobile with ~48px gap */}
         <div className="relative grid grid-cols-1 md:grid-cols-3 gap-12 max-w-5xl mx-auto">
           
-          {/* Thin horizontal connector line between circles on desktop only (Teal #1F9D74, 2px) */}
-          <div className="hidden md:block absolute top-5 left-[16%] right-[16%] h-[2px] bg-[#1F9D74] -z-0" />
+          {/* Thin horizontal connector line between circles on desktop (Teal, 2px) */}
+          <div className="hidden md:block absolute top-5 left-[16%] right-[16%] h-[2px] bg-[#0D9488] -z-0" />
 
           {steps.map((step, idx) => (
             <div key={idx} className="relative z-10 flex flex-col items-center text-center">

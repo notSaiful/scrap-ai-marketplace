@@ -43,26 +43,26 @@ export const WhyTrustSection: React.FC = () => {
           </p>
         </div>
 
-        {/* 2x2 grid desktop, 1-column mobile */}
+        {/* 2x2 grid desktop, single column mobile */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
           {points.map((point, index) => {
             const Icon = point.icon;
             return (
               <div
                 key={index}
-                className="bg-white rounded-[12px] p-6 border border-[#E2E2E0] shadow-[0_1px_3px_rgba(0,0,0,0.06)] hover:border-[#1F9D74]/70 hover:shadow-sm transition-all flex flex-col justify-start"
+                className="bg-white rounded-[12px] p-6 border border-[#E2E2E0] shadow-[0_1px_3px_rgba(0,0,0,0.06)] hover:border-[#0D9488]/70 hover:shadow-sm transition-all flex flex-col justify-start"
               >
-                {/* Small teal-filled icon circle top-left */}
-                <div className="w-8 h-8 rounded-full bg-[#1F9D74] text-white flex items-center justify-center shrink-0 mb-4 shadow-2xs">
+                {/* Small Teal-filled icon circle top-left */}
+                <div className="w-8 h-8 rounded-full bg-[#0D9488] text-white flex items-center justify-center shrink-0 mb-4 shadow-2xs">
                   <Icon className="w-4 h-4 stroke-[2.2]" />
                 </div>
 
-                {/* 16px bold Navy heading */}
+                {/* Bold Navy heading 16px */}
                 <h3 className="text-[16px] font-bold text-[#0F2A47] mb-2 tracking-tight">
                   {point.title}
                 </h3>
 
-                {/* 14px gray description */}
+                {/* Gray description 14px */}
                 <p className="text-[14px] text-[#6B7280] leading-relaxed font-normal">
                   {point.description}
                 </p>

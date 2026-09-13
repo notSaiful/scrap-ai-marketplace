@@ -24,7 +24,7 @@ export const FinalCTA: React.FC<FinalCTAProps> = ({ onOpenRFQ }) => {
           {/* CTA: White fill, Navy text, 8px radius, Teal border on hover */}
           <button
             onClick={onOpenRFQ}
-            className="bg-white text-[#0F2A47] hover:text-[#1F9D74] border-2 border-transparent hover:border-[#1F9D74] text-base font-semibold px-8 py-3.5 rounded-[8px] transition-all duration-200 shadow-md cursor-pointer active:scale-98"
+            className="bg-white text-[#0F2A47] hover:text-[#0D9488] border-2 border-transparent hover:border-[#0D9488] text-base font-semibold px-8 py-3.5 rounded-[8px] transition-all duration-200 shadow-md cursor-pointer active:scale-98"
           >
             Get Your Quote
           </button>

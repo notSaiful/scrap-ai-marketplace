@@ -14,26 +14,26 @@ export const WhatWeSource: React.FC<WhatWeSourceProps> = ({
     {
       name: 'Steel Scrap',
       id: 'steel',
-      image: '/images/steel-scrap.jpg',
+      image: 'https://images.unsplash.com/photo-1504917599217-d4dc5ebe6122?auto=format&fit=crop&w=500&q=80',
       description: 'HMS 1/2, Plate & Structural, Shredded',
     },
     {
       name: 'Plastic Waste',
       id: 'plastic',
-      image: '/images/plastic-waste.jpg',
-      description: 'Clean Baled Polymers, Sorted Flakes',
+      image: 'https://images.unsplash.com/photo-1528190336454-13cd56b45b5a?auto=format&fit=crop&w=500&q=80',
+      description: 'HDPE Flakes, Clean PET Bales, LDPE Film',
     },
     {
       name: 'Paper & Cardboard',
       id: 'paper',
-      image: '/images/paper-cardboard.jpg',
-      description: 'OCC Corrugated, Mixed Kraft Bales',
+      image: 'https://images.unsplash.com/photo-1607344645866-009c320c5ab8?auto=format&fit=crop&w=500&q=80',
+      description: 'OCC Corrugated, Mixed Kraft, Sorted Ledger',
     },
     {
       name: 'Textile Waste',
       id: 'textiles',
-      image: '/images/textile-waste.jpg',
-      description: 'Sorted Cotton Clips, Fabric Remnants',
+      image: 'https://images.unsplash.com/photo-1558769132-cb1aea458c5e?auto=format&fit=crop&w=500&q=80',
+      description: 'Cotton Clips, Yarn Rags, Synthetic Shoddy',
     },
   ];
 
@@ -57,23 +57,23 @@ export const WhatWeSource: React.FC<WhatWeSourceProps> = ({
             <div
               key={mat.id}
               onClick={() => onSelectCategory && onSelectCategory(mat.id)}
-              className="group bg-white rounded-[12px] border border-[#E2E2E0] hover:border-[#1F9D74] transition-all duration-200 overflow-hidden cursor-pointer shadow-2xs hover:shadow-md flex flex-col"
+              className="group bg-white rounded-[12px] border border-[#E2E2E0] hover:border-[#0D9488] transition-all duration-200 overflow-hidden cursor-pointer shadow-2xs hover:shadow-md flex flex-col"
             >
-              {/* Material thumbnail on top (square 1:1 image) */}
-              <div className="relative aspect-square w-full overflow-hidden bg-[#F7F8FA]">
+              {/* Material thumbnail on top */}
+              <div className="relative h-44 sm:h-48 w-full overflow-hidden bg-slate-100">
                 <img
                   src={mat.image}
                   alt={mat.name}
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                 />
                 <div className="absolute top-3 right-3 w-7 h-7 rounded-full bg-white/90 text-[#0F2A47] flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-xs">
-                  <ArrowUpRight className="w-4 h-4 text-[#1F9D74]" />
+                  <ArrowUpRight className="w-4 h-4 text-[#0D9488]" />
                 </div>
               </div>
 
               {/* Name centered below in Navy medium weight */}
               <div className="p-5 text-center flex-1 flex flex-col justify-center">
-                <h3 className="text-base sm:text-[17px] font-medium text-[#0F2A47] group-hover:text-[#1F9D74] transition-colors">
+                <h3 className="text-base sm:text-[17px] font-medium text-[#0F2A47] group-hover:text-[#0D9488] transition-colors">
                   {mat.name}
                 </h3>
                 <p className="text-xs text-[#6B7280] mt-1 font-normal">
@@ -84,12 +84,12 @@ export const WhatWeSource: React.FC<WhatWeSourceProps> = ({
           ))}
         </div>
 
-        {/* Below the grid, centered teal link: "Don't see what you're looking for? Ask us" */}
+        {/* Footer line: Don't see what you're looking for? [Ask us] */}
         <div className="text-center text-sm sm:text-base text-[#6B7280]">
           <span>Don't see what you're looking for? </span>
           <button
             onClick={onAskUs}
-            className="text-[#1F9D74] font-medium hover:underline cursor-pointer inline-flex items-center"
+            className="text-[#0D9488] font-medium hover:underline cursor-pointer inline-flex items-center"
           >
             Ask us
           </button>
