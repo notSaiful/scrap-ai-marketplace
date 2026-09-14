@@ -52,46 +52,51 @@ export const MarketlyMissionSection: React.FC<MarketlyMissionSectionProps> = ({
       <div className="absolute bottom-10 right-10 w-[400px] h-[240px] bg-blue-100/30 rounded-full blur-3xl pointer-events-none -z-10" />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Mission Statement Hero Box */}
-        <div className="relative rounded-3xl bg-gradient-to-br from-slate-900 via-[#0b1329] to-slate-900 text-white p-8 sm:p-12 lg:p-16 shadow-[0_20px_50px_rgba(15,23,42,0.18)] border border-slate-800 overflow-hidden mb-16">
-          {/* Subtle Grid Accent in Background */}
-          <div
-            className="absolute inset-0 opacity-[0.07] pointer-events-none"
-            style={{
-              backgroundImage:
-                'radial-gradient(circle at 1px 1px, #ffffff 1px, transparent 0)',
-              backgroundSize: '28px 28px',
-            }}
-          />
+        {/* Mission Statement Hero Box with Video Background */}
+        <div className="relative rounded-3xl text-white p-8 sm:p-12 lg:p-16 shadow-[0_20px_50px_rgba(15,23,42,0.18)] border border-slate-800 overflow-hidden mb-16">
+          {/* Background Video (Autoplay, Loop, Muted, Playsinline) */}
+          <video
+            autoPlay
+            loop
+            muted
+            playsInline
+            className="absolute inset-0 w-full h-full object-cover object-center pointer-events-none"
+          >
+            <source src="/why-we-started.mp4" type="video/mp4" />
+          </video>
 
-          <div className="relative z-10 max-w-4xl">
+          {/* Cinematic Dark Gradient Overlay for Text Readability */}
+          <div className="absolute inset-0 bg-gradient-to-r from-slate-950/95 via-slate-950/80 to-slate-900/50 pointer-events-none" />
+          <div className="absolute inset-0 bg-slate-950/30 pointer-events-none" />
+
+          <div className="relative z-10 max-w-3xl">
             {/* Pill Badge */}
-            <div className="inline-flex items-center space-x-2 px-3.5 py-1.5 rounded-full bg-sky-500/10 border border-sky-400/30 text-sky-300 text-xs font-semibold uppercase tracking-wider mb-6 backdrop-blur-sm">
+            <div className="inline-flex items-center space-x-2 px-3.5 py-1.5 rounded-full bg-sky-500/15 border border-sky-400/40 text-sky-300 text-xs font-semibold uppercase tracking-wider mb-6 backdrop-blur-md">
               <Sparkles className="w-3.5 h-3.5 text-sky-400" />
               <span>Mission</span>
             </div>
 
             {/* Mission Title */}
-            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-white mb-6 leading-[1.15]">
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-white mb-6 leading-[1.15] drop-shadow-md">
               Why We Started wastemarket
             </h2>
 
             {/* Mission Body Paragraph */}
-            <p className="text-base sm:text-lg lg:text-xl text-slate-300 leading-relaxed font-normal mb-8 max-w-3xl">
+            <p className="text-base sm:text-lg lg:text-xl text-slate-100 leading-relaxed font-normal mb-8 max-w-2xl drop-shadow-sm">
               Too many businesses lose money to short-weighted loads, mismatched quality, and dealers who disappear after the sale. We built wastemarket so buyers never have to gamble on a phone call again — every batch is graded before you commit, every order is backed by a guarantee, and every delivery is tracked from source to your gate.
             </p>
 
             {/* Micro Highlights Pill Row */}
-            <div className="flex flex-wrap items-center gap-3 sm:gap-4 pt-4 border-t border-white/10 text-xs sm:text-sm text-slate-300">
-              <div className="flex items-center space-x-2 bg-white/5 border border-white/10 px-3.5 py-1.5 rounded-full">
+            <div className="flex flex-wrap items-center gap-3 sm:gap-4 pt-4 border-t border-white/20 text-xs sm:text-sm text-white">
+              <div className="flex items-center space-x-2 bg-slate-900/80 backdrop-blur-md border border-white/15 px-3.5 py-1.5 rounded-full shadow-md">
                 <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0" />
                 <span>Zero Short-Weight Risk</span>
               </div>
-              <div className="flex items-center space-x-2 bg-white/5 border border-white/10 px-3.5 py-1.5 rounded-full">
+              <div className="flex items-center space-x-2 bg-slate-900/80 backdrop-blur-md border border-white/15 px-3.5 py-1.5 rounded-full shadow-md">
                 <ShieldCheck className="w-4 h-4 text-sky-400 shrink-0" />
                 <span>Pre-Commitment Grade Assay</span>
               </div>
-              <div className="flex items-center space-x-2 bg-white/5 border border-white/10 px-3.5 py-1.5 rounded-full">
+              <div className="flex items-center space-x-2 bg-slate-900/80 backdrop-blur-md border border-white/15 px-3.5 py-1.5 rounded-full shadow-md">
                 <ShieldCheck className="w-4 h-4 text-amber-400 shrink-0" />
                 <span>100% Escrow Protection</span>
               </div>
