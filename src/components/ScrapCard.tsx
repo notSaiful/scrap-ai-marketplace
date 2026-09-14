@@ -29,7 +29,7 @@ export const ScrapCard: React.FC<ScrapCardProps> = ({
   };
 
   const inrRate = Math.max(1, Math.round((item.pricePerTon * 83) / 1000));
-  const moqKg = item.moq >= 10 ? item.moq * 50 : 500;
+  const moqKg = 10;
   const stockKg = item.availableStock * 1000;
 
   return (

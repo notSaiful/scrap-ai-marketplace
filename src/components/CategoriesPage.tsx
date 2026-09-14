@@ -108,7 +108,7 @@ export const CategoriesPage: React.FC<CategoriesPageProps> = ({
       }
 
       // 4. Quantity Range (MOQ in kg)
-      const moqKg = item.moq >= 10 ? item.moq * 50 : 500;
+      const moqKg = 10;
       if (selectedQuantityRange !== 'all') {
         if (selectedQuantityRange === '<500' && moqKg >= 500) return false;
         if (selectedQuantityRange === '500-2000' && (moqKg < 500 || moqKg > 2000)) return false;
@@ -431,7 +431,7 @@ export const CategoriesPage: React.FC<CategoriesPageProps> = ({
                   const baseRatePerKg = Math.round(inrRatePerTon / 1000);
                   const minPrice = Math.max(1, Math.round(baseRatePerKg * 0.95));
                   const maxPrice = Math.max(1, Math.round(baseRatePerKg * 1.05));
-                  const moqKg = item.moq >= 10 ? item.moq * 50 : 500;
+                  const moqKg = 10;
                   const stockKg = item.availableStock * 1000;
 
                   return (

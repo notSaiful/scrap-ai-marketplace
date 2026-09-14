@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { ScrapItem } from '../types/scrap';
-import { X, Send, CheckCircle2, ShieldCheck, FileText, User as UserIcon } from 'lucide-react';
+import { X, Send, CheckCircle2, ShieldCheck, FileText, User as UserIcon, Minus, Plus } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 interface RFQModalProps {
@@ -21,11 +21,11 @@ export const RFQModal: React.FC<RFQModalProps> = ({
   if (!isOpen) return null;
 
   const { user, isAuthenticated } = useAuth();
-  const defaultMoqKg = item ? (item.moq >= 10 ? item.moq * 50 : 500) : 500;
+  const defaultMoqKg = 10;
   const inrRatePerTon = item ? (item.pricePerTon > 1000 ? Math.round(item.pricePerTon * 83) : Math.round(item.pricePerTon * 85)) : 42000;
   const defaultPricePerKg = Math.max(1, Math.round(inrRatePerTon / 1000));
 
-  const [quantity, setQuantity] = useState(initialQuantity || defaultMoqKg);
+  const [quantity, setQuantity] = useState(initialQuantity && initialQuantity >= 10 ? initialQuantity : defaultMoqKg);
   const [targetPrice, setTargetPrice] = useState(defaultPricePerKg);
   const [destinationPort, setDestinationPort] = useState('Bengaluru, Karnataka');
   const [incoterm, setIncoterm] = useState('CIF');
@@ -112,18 +112,47 @@ export const RFQModal: React.FC<RFQModalProps> = ({
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs font-semibold text-black mb-1.5">
-                  Required Quantity (kg)
-                </label>
-                <input
-                  type="number"
-                  value={quantity}
-                  onChange={(e) => setQuantity(Number(e.target.value))}
-                  min={defaultMoqKg}
-                  step={50}
-                  className="w-full text-xs font-medium px-3.5 py-2.5 bg-neutral-50/70 border border-black/[0.1] rounded-xl focus:bg-white focus:border-[#38bdf8] focus:ring-4 focus:ring-[#38bdf8]/10 focus:outline-none transition-all"
-                  required
-                />
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="text-xs font-semibold text-black">
+                    Required Quantity (kg)
+                  </label>
+                  <span className="text-[11px] text-slate-500 font-medium">Min. MOQ: 10 kg</span>
+                </div>
+                <div className="flex items-center border border-black/[0.1] rounded-xl bg-neutral-50/70 overflow-hidden focus-within:bg-white focus-within:border-[#38bdf8] focus-within:ring-4 focus-within:ring-[#38bdf8]/10 transition-all">
+                  <button
+                    type="button"
+                    onClick={() => setQuantity(Math.max(10, quantity - 1))}
+                    disabled={quantity <= 10}
+                    className="p-2.5 text-slate-600 hover:text-black hover:bg-slate-200/50 disabled:opacity-40 disabled:hover:bg-transparent disabled:cursor-not-allowed transition-colors cursor-pointer"
+                    title="Decrease by 1"
+                  >
+                    <Minus className="w-3.5 h-3.5" />
+                  </button>
+                  <input
+                    type="number"
+                    value={quantity}
+                    onChange={(e) => {
+                      const val = parseInt(e.target.value, 10);
+                      if (!isNaN(val)) setQuantity(val);
+                    }}
+                    onBlur={() => {
+                      if (quantity < 10) setQuantity(10);
+                    }}
+                    min={10}
+                    step={1}
+                    className="w-full text-xs font-bold text-center bg-transparent focus:outline-none"
+                    required
+                  />
+                  <span className="text-[11px] font-bold text-slate-400 pr-1">kg</span>
+                  <button
+                    type="button"
+                    onClick={() => setQuantity(quantity + 1)}
+                    className="p-2.5 text-slate-600 hover:text-black hover:bg-slate-200/50 transition-colors cursor-pointer"
+                    title="Increase by 1"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                  </button>
+                </div>
               </div>
 
               <div>

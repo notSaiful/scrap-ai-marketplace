@@ -647,7 +647,7 @@ export const AIAdvisorPage: React.FC<AIAdvisorPageProps> = ({
                                       <span className="text-xs font-normal text-slate-500">/ kg</span>
                                     </div>
                                     <div className="text-[11px] text-slate-500">
-                                      Min. order: {(item.moq >= 10 ? item.moq * 50 : 500).toLocaleString('en-IN')} kg • {(item.availableStock * 1000).toLocaleString('en-IN')} kg stock
+                                      Min. order: 10 kg • {(item.availableStock * 1000).toLocaleString('en-IN')} kg stock
                                     </div>
                                   </div>
 
@@ -679,7 +679,7 @@ export const AIAdvisorPage: React.FC<AIAdvisorPageProps> = ({
                                       type="button"
                                       onClick={(e) => {
                                         e.stopPropagation();
-                                        onOpenRFQ?.(item, item.moq);
+                                        onOpenRFQ?.(item, 10);
                                       }}
                                       className="w-full bg-slate-900 hover:bg-[#0ea5e9] text-white text-xs font-bold py-2 rounded-full transition-all cursor-pointer active:scale-98 text-center shadow-xs"
                                     >

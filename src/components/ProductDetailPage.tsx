@@ -56,11 +56,11 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
   const minPrice = Math.max(1, Math.round(baseRate * 0.95));
   const maxPrice = Math.max(1, Math.round(baseRate * 1.05));
 
-  // Default MOQ in kg (standard scrap batch size)
-  const moqKg = item.moq >= 10 ? item.moq * 50 : 500;
+  // Minimum MOQ for products is 10
+  const moqKg = 10;
 
-  // Quantity Stepper (in kg)
-  const [quantity, setQuantity] = useState<number>(moqKg);
+  // Quantity Stepper (in kg, starts at MOQ 10)
+  const [quantity, setQuantity] = useState<number>(10);
 
   // Active Tab: Overview | Specifications | Sourcing
   const [activeTab, setActiveTab] = useState<'overview' | 'specs' | 'sourcing'>('overview');
@@ -193,27 +193,46 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
               <div className="space-y-2">
                 <div className="flex items-center justify-between text-xs font-semibold text-slate-700">
                   <span>Order Quantity (kg)</span>
-                  <span className="text-slate-400 font-normal">MOQ: {moqKg.toLocaleString('en-IN')} kg</span>
+                  <span className="text-slate-400 font-normal">MOQ: {moqKg} kg</span>
                 </div>
 
                 <div className="flex items-center space-x-3">
                   <div className="flex items-center border border-slate-200 rounded-xl bg-slate-50 overflow-hidden">
                     <button
                       type="button"
-                      onClick={() => setQuantity(Math.max(moqKg, quantity - 100))}
-                      className="p-3 text-slate-600 hover:text-black hover:bg-slate-200/60 transition-colors cursor-pointer"
-                      title="Decrease quantity"
+                      onClick={() => setQuantity(Math.max(moqKg, quantity - 1))}
+                      disabled={quantity <= moqKg}
+                      className="p-3 text-slate-600 hover:text-black hover:bg-slate-200/60 disabled:opacity-40 disabled:hover:bg-transparent disabled:cursor-not-allowed transition-colors cursor-pointer"
+                      title="Decrease quantity by 1"
                     >
                       <Minus className="w-4 h-4" />
                     </button>
-                    <span className="px-5 text-sm font-bold text-slate-900 min-w-[90px] text-center">
-                      {quantity.toLocaleString('en-IN')} kg
-                    </span>
+                    <input
+                      type="number"
+                      min={moqKg}
+                      step={1}
+                      value={quantity}
+                      onChange={(e) => {
+                        const val = parseInt(e.target.value, 10);
+                        if (!isNaN(val)) {
+                          setQuantity(val);
+                        } else {
+                          setQuantity(moqKg);
+                        }
+                      }}
+                      onBlur={() => {
+                        if (quantity < moqKg) {
+                          setQuantity(moqKg);
+                        }
+                      }}
+                      className="w-16 text-sm font-bold text-slate-900 text-center bg-transparent focus:outline-none"
+                    />
+                    <span className="text-xs font-bold text-slate-500 pr-3">kg</span>
                     <button
                       type="button"
-                      onClick={() => setQuantity(quantity + 100)}
+                      onClick={() => setQuantity(quantity + 1)}
                       className="p-3 text-slate-600 hover:text-black hover:bg-slate-200/60 transition-colors cursor-pointer"
-                      title="Increase quantity"
+                      title="Increase quantity by 1"
                     >
                       <Plus className="w-4 h-4" />
                     </button>
