@@ -95,15 +95,9 @@ export const WhatWeSource: React.FC<WhatWeSourceProps> = ({
               {/* Material Text Details */}
               <div className="p-5 flex-1 flex flex-col justify-between">
                 <div>
-                  <h3 className="text-base sm:text-lg font-bold text-[#0f1115] tracking-tight mb-1 group-hover:text-[#0284c7] transition-colors">
+                  <h3 className="text-base sm:text-lg font-bold text-[#0f1115] tracking-tight group-hover:text-[#0284c7] transition-colors">
                     {mat.name}
                   </h3>
-                  <p className="text-xs text-slate-500 line-clamp-2 leading-relaxed mb-3 font-normal">
-                    {mat.grade}
-                  </p>
-                  <p className="text-[11px] text-slate-400 font-medium">
-                    {mat.specs}
-                  </p>
                 </div>
 
                 <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-semibold text-[#0284c7]">
