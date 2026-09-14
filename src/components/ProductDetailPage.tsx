@@ -40,8 +40,8 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
   // Quantity Stepper
   const [quantity, setQuantity] = useState<number>(item.moq || 20);
 
-  // Active Tab: Overview | Specifications | Sourcing | FAQs
-  const [activeTab, setActiveTab] = useState<'overview' | 'specs' | 'sourcing' | 'faqs'>('overview');
+  // Active Tab: Overview | Specifications | Sourcing
+  const [activeTab, setActiveTab] = useState<'overview' | 'specs' | 'sourcing'>('overview');
   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(null);
 
   // Derive material display name and base pricing
@@ -244,7 +244,7 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
 
         {/* ========================================================================= */}
         {/* 3. TABBED CONTENT BELOW THE FOLD                                          */}
-        {/* "Overview" / "Specifications" / "How We Source" / "FAQs"                  */}
+        {/* "Overview" / "Specifications" / "How We Source"                           */}
         {/* ========================================================================= */}
         <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
           
@@ -254,7 +254,6 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
               { id: 'overview', label: 'Overview' },
               { id: 'specs', label: 'Specifications' },
               { id: 'sourcing', label: 'How We Source' },
-              { id: 'faqs', label: 'FAQs' },
             ].map(tab => (
               <button
                 key={tab.id}
@@ -375,39 +374,50 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
             </div>
           )}
 
-          {/* Tab 4: FAQs */}
-          {activeTab === 'faqs' && (
-            <div className="p-6 sm:p-8 space-y-4">
-              <h3 className="text-lg font-bold text-slate-900 mb-2">Frequently Asked Questions</h3>
-              
-              <div className="space-y-3">
-                {faqs.map((faq, i) => {
-                  const isOpen = openFaqIndex === i;
-                  return (
-                    <div key={i} className="border border-slate-200 rounded-xl overflow-hidden">
-                      <button
-                        onClick={() => setOpenFaqIndex(isOpen ? null : i)}
-                        className="w-full text-left p-4 flex items-center justify-between text-xs sm:text-sm font-semibold text-slate-900 hover:text-[#0ea5e9] transition-colors cursor-pointer"
-                      >
-                        <span>{faq.q}</span>
-                        <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform ${isOpen ? 'rotate-180 text-[#0ea5e9]' : ''}`} />
-                      </button>
-                      {isOpen && (
-                        <div className="px-4 pb-4 text-xs text-slate-600 border-t border-slate-100 pt-2 font-normal">
-                          {faq.a}
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-
         </div>
 
         {/* ========================================================================= */}
-        {/* 4. RELATED MATERIALS (Cross-sell Items)                                   */}
+        {/* 4. FREQUENTLY ASKED QUESTIONS (Dedicated Section Below Product Page)       */}
+        {/* ========================================================================= */}
+        <section className="bg-white rounded-2xl border border-slate-200 shadow-xs p-6 sm:p-8 space-y-6">
+          <div>
+            <div className="inline-flex items-center space-x-2 text-xs font-semibold text-[#0ea5e9] mb-2 uppercase tracking-wider bg-sky-50 border border-sky-100 px-3 py-1 rounded-full">
+              <HelpCircle className="w-3.5 h-3.5 text-[#0ea5e9]" />
+              <span>Got Questions?</span>
+            </div>
+            <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-[#0f1115]">
+              Frequently Asked Questions
+            </h2>
+            <p className="text-xs sm:text-sm text-slate-500 mt-1">
+              Common questions about ordering, logistics, custom volumes, and escrow protection for {materialName}.
+            </p>
+          </div>
+
+          <div className="space-y-3">
+            {faqs.map((faq, i) => {
+              const isOpen = openFaqIndex === i;
+              return (
+                <div key={i} className="border border-slate-200 rounded-xl overflow-hidden">
+                  <button
+                    onClick={() => setOpenFaqIndex(isOpen ? null : i)}
+                    className="w-full text-left p-4 sm:p-5 flex items-center justify-between text-xs sm:text-sm font-semibold text-slate-900 hover:text-[#0ea5e9] transition-colors cursor-pointer bg-slate-50/50"
+                  >
+                    <span>{faq.q}</span>
+                    <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform ${isOpen ? 'rotate-180 text-[#0ea5e9]' : ''}`} />
+                  </button>
+                  {isOpen && (
+                    <div className="px-4 sm:px-5 pb-5 text-xs sm:text-sm text-slate-600 border-t border-slate-100 pt-3 font-normal leading-relaxed bg-white">
+                      {faq.a}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </section>
+
+        {/* ========================================================================= */}
+        {/* 5. RELATED BULK MATERIALS (Cross-sell Items)                              */}
         {/* ========================================================================= */}
         <section className="space-y-4 pt-4 border-t border-slate-200">
           <div>
