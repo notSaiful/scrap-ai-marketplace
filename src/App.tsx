@@ -257,10 +257,19 @@ function MarketplaceContent() {
   const isCategoriesPage = currentPage === 'categories' && !selectedScrapItem;
   const shouldStickSearchBar = isScrolled && (isMarketplaceHome || isCategoriesPage);
 
-  // High-demand scrap lots for homepage showcase
-  const highDemandLots = useMemo(() => {
-    const featured = SCRAP_ITEMS.filter(s => s.isFeatured || s.isHotDeal);
-    return (featured.length >= 4 ? featured : SCRAP_ITEMS).slice(0, 4);
+  // Available category lot listings (1 listing per category section matching the category view)
+  const categoryAvailableLots = useMemo(() => {
+    const seenCategories = new Set<string>();
+    const onePerCategory: ScrapItem[] = [];
+
+    for (const item of SCRAP_ITEMS) {
+      if (!seenCategories.has(item.category)) {
+        seenCategories.add(item.category);
+        onePerCategory.push(item);
+      }
+    }
+
+    return onePerCategory;
   }, []);
 
 
@@ -451,6 +460,46 @@ function MarketplaceContent() {
 
             {/* Moving Trust Strip Banner */}
             <TrustStrip />
+
+            {/* Available Category Products Showcase (Directly below hero/trust strip) */}
+            <section className="py-14 sm:py-20 bg-[#F7F8FA] border-b border-black/[0.06]">
+              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                {/* Section Header */}
+                <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-8 sm:mb-10 gap-4">
+                  <div>
+                    <div className="inline-flex items-center space-x-2 text-xs font-semibold text-[#0ea5e9] mb-2 uppercase tracking-wider bg-sky-50 border border-sky-100 px-3 py-1 rounded-full">
+                      <span>Live Catalog</span>
+                    </div>
+                    <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-[#0f1115]">
+                      Available Material Lots
+                    </h2>
+                    <p className="text-xs sm:text-sm text-slate-500 mt-1">
+                      Direct industrial scrap listings available for immediate delivery across categories.
+                    </p>
+                  </div>
+
+                  <button
+                    onClick={() => handleOpenCategoriesPage('all')}
+                    className="inline-flex items-center space-x-1.5 text-xs font-bold text-[#0284c7] hover:text-[#0369a1] transition-colors cursor-pointer self-start sm:self-auto"
+                  >
+                    <span>View all categories</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+
+                {/* Grid of Available Product Listings (1 per category) */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 sm:gap-6">
+                  {categoryAvailableLots.map((item) => (
+                    <ScrapCard
+                      key={item.id}
+                      item={item}
+                      onSelect={(selected) => setSelectedScrapItem(selected)}
+                      onQuickRFQ={(target) => handleOpenRFQ(target)}
+                    />
+                  ))}
+                </div>
+              </div>
+            </section>
 
             {/* How It Works (3 steps) */}
             <div id="categories">
