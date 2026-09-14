@@ -153,7 +153,7 @@ export const CategoriesPage: React.FC<CategoriesPageProps> = ({
           <div>
             <div className="flex items-center gap-2">
               <span className="text-xs font-bold text-[#0ea5e9] uppercase tracking-wider bg-sky-50 px-2.5 py-0.5 rounded-full border border-sky-100">
-                Bulk Wholesale Supply
+                Verified Industrial Supply
               </span>
               <span className="text-xs text-slate-400">
                 {displayedItems.length} Available Lots
@@ -163,7 +163,7 @@ export const CategoriesPage: React.FC<CategoriesPageProps> = ({
               {activeCategory === 'all' ? 'Industrial Bulk Materials & Scrap Supply' : currentCategoryInfo.name}
             </h1>
             <p className="text-xs sm:text-sm text-slate-500 mt-1 max-w-2xl">
-              Dense wholesale inventory sourced directly from verified industrial suppliers and processors. Transparent per-kg pricing with escrow delivery protection.
+              Certified material lots sourced directly from accredited industrial yards and smelters. Transparent per-kg pricing with digital assay verification and escrow protection.
             </p>
           </div>
 
