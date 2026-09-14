@@ -9,7 +9,7 @@ interface HeaderProps {
   onOpenQuotes?: () => void;
   onOpenContactUs?: () => void;
   onOpenProfile?: () => void;
-  currentPage?: 'marketplace' | 'categories' | 'advisor' | 'contact' | 'quotes';
+  currentPage?: 'marketplace' | 'categories' | 'advisor' | 'contact' | 'quotes' | 'auth';
   onOpenAuth: (mode?: 'signin' | 'signup') => void;
   shouldHide?: boolean;
 }

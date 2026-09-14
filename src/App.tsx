@@ -12,6 +12,7 @@ import { ScrapCard } from './components/ScrapCard';
 import { ProductDetailPage } from './components/ProductDetailPage';
 import { RFQModal } from './components/RFQModal';
 import { AuthModal } from './components/AuthModal';
+import { AuthPage } from './components/AuthPage';
 import { AccountProfileModal } from './components/AccountProfileModal';
 import { AuthProvider } from './context/AuthContext';
 import { SCRAP_ITEMS } from './data/scrapData';
@@ -33,7 +34,8 @@ import { ScrapRagResult } from './types/rag';
 const INITIAL_BUYER_QUOTES: BuyerQuoteEnquiry[] = [];
 
 function MarketplaceContent() {
-  const [currentPage, setCurrentPage] = useState<'marketplace' | 'categories' | 'advisor' | 'contact' | 'quotes'>('marketplace');
+  const [currentPage, setCurrentPage] = useState<'marketplace' | 'categories' | 'advisor' | 'contact' | 'quotes' | 'auth'>('marketplace');
+  const [authPageMode, setAuthPageMode] = useState<'signin' | 'signup'>('signin');
   const [buyerQuotes, setBuyerQuotes] = useState<BuyerQuoteEnquiry[]>(() => {
     try {
       const saved = localStorage.getItem('wm_buyer_quotes');
@@ -182,8 +184,10 @@ function MarketplaceContent() {
   };
 
   const handleOpenAuth = (mode: 'signin' | 'signup' = 'signin') => {
-    setAuthModalMode(mode);
-    setAuthModalOpen(true);
+    setAuthPageMode(mode);
+    setSelectedScrapItem(null);
+    setCurrentPage('auth');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleImageSearchTrigger = (scrapType: string) => {
@@ -292,7 +296,7 @@ function MarketplaceContent() {
         onOpenContactUs={handleOpenContactUs}
         onOpenProfile={() => setProfileModalOpen(true)}
         onOpenAuth={handleOpenAuth}
-        shouldHide={shouldStickSearchBar}
+        shouldHide={shouldStickSearchBar || currentPage === 'auth'}
       />
 
       {/* Sticky Search Bar: Sticks in place of header once user scrolls down */}
@@ -451,6 +455,13 @@ function MarketplaceContent() {
             }}
             onOpenContactUs={handleOpenContactUs}
           />
+        ) : currentPage === 'auth' ? (
+          /* Dedicated Full Screen Sign In / Sign Up Page */
+          <AuthPage
+            initialMode={authPageMode}
+            onBackToMarketplace={handleGoHome}
+            onOpenProfile={() => setProfileModalOpen(true)}
+          />
         ) : (
           /* Marketplace Landing Page */
           <div>
@@ -571,8 +582,8 @@ function MarketplaceContent() {
         onSelectScrapType={handleImageSearchTrigger}
       />
 
-      {/* Marketly Multi-column Footer (Only on Marketplace and Categories, hidden on full-screen AI Advisor) */}
-      {currentPage !== 'advisor' && (
+      {/* Marketly Multi-column Footer (Only on Marketplace and Categories, hidden on full-screen AI Advisor & Auth Page) */}
+      {currentPage !== 'advisor' && currentPage !== 'auth' && (
         <MarketlyFooter
           onGoHome={handleGoHome}
           onSelectCategory={(cat) => handleOpenCategoriesPage(cat)}
