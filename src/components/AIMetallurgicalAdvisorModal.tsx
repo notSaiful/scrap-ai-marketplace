@@ -12,6 +12,9 @@ import {
   FileText,
 } from 'lucide-react';
 
+import { SCRAP_ITEMS } from '../data/scrapData';
+import { queryOpenRouterRag } from '../services/openRouterService';
+
 interface AIMetallurgicalAdvisorModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -36,9 +39,9 @@ export const AIMetallurgicalAdvisorModal: React.FC<AIMetallurgicalAdvisorModalPr
     {
       id: 'msg-1',
       sender: 'ai',
-      text: "Hello! I am your AI Metallurgical & Scrap Trade Advisor on wastemarket.in. I can evaluate alloy compatibility, ISRI specifications, induction/EAF furnace chemistry, CIF maritime freight, and escrow inspection protocols. What would you like to verify today?",
+      text: "Hello! I am your AI Metallurgical & Scrap Trade Advisor on wastemarket.in. I evaluate alloy compatibility, ISRI specifications, induction/EAF furnace chemistry, CIF maritime freight, and escrow inspection protocols with live AI inference. What would you like to verify today?",
       timestamp: 'Just now',
-      tags: ['ISRI Standards', 'XRF Assays', 'LME Arbitrage', 'Escrow'],
+      tags: ['ISRI Standards', 'XRF Assays', 'LME Benchmarks', 'Escrow'],
     },
   ]);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -52,9 +55,9 @@ export const AIMetallurgicalAdvisorModal: React.FC<AIMetallurgicalAdvisorModalPr
     'What is the yield difference between Clean 6063 extrusions vs Troma car wheels?',
   ];
 
-  const handleSend = (textToSend?: string) => {
+  const handleSend = async (textToSend?: string) => {
     const q = (textToSend || inputQuery).trim();
-    if (!q) return;
+    if (!q || isProcessing) return;
 
     const userMsg: ChatMessage = {
       id: `user-${Date.now()}`,
@@ -67,39 +70,35 @@ export const AIMetallurgicalAdvisorModal: React.FC<AIMetallurgicalAdvisorModalPr
     setInputQuery('');
     setIsProcessing(true);
 
-    setTimeout(() => {
-      let reply = '';
-      let tags: string[] = [];
-      const lower = q.toLowerCase();
-
-      if (lower.includes('millberry') || lower.includes('copper') || lower.includes('induction')) {
-        reply = `**Direct Induction Melting Feasibility: 100% Approved.**\n\nHigh-Grade Millberry Copper Wire (ISRI 'Berry') consists of clean, bare, uncoated wire with a certified minimum purity of 99.991% Cu. Because it has less than 5 ppm of lead (Pb) and zero insulating varnish, it does not create toxic smoke or refractory erosion in coreless induction furnaces.\n\n• **Dross Skimming Loss:** < 0.35%\n• **Electrical Conductivity:** ≥ 101% IACS post-melt\n• **Recommendation:** Baled 250kg briquettes allow dense charging and rapid thermal coupling.`;
-        tags = ['Copper 99.99%', 'Induction Furnace', 'ISRI Berry'];
-      } else if (lower.includes('hms') || lower.includes('steel') || lower.includes('eaf') || lower.includes('phosphorus')) {
-        reply = `**Heavy Melting Steel (HMS 1/2) Chemistry & EAF Guidelines:**\n\nOur listed HMS 1/2 lots (80:20 blend) strictly comply with ISRI 200–206 specifications sheared to max 1.5m lengths:\n\n• **Phosphorus (P):** 0.035% (Safe limit < 0.05%)\n• **Sulfur (S):** 0.028% (Safe limit < 0.05%)\n• **Bulk Density:** ~0.85 MT/m³ (reduces EAF bucket charging cycles)\n• **Debris Guarantee:** Zero sealed pressure vessels, zero ammunition scrap, and non-ferrous attachments < 1.0%.`;
-        tags = ['HMS 1/2', 'EAF Furnace', 'ISRI 200-206'];
-      } else if (lower.includes('escrow') || lower.includes('inspection') || lower.includes('dispute') || lower.includes('port')) {
-        reply = `**Free Trade Escrow & Port Inspection Protocols:**\n\n1. **Pre-Shipment Assay:** Every yard upload requires portable XRF or OES spectrometry certification.\n2. **Escrow Hold:** Buyer funds are held in Tier-1 banking escrow upon proforma invoice confirmation.\n3. **Independent Discharge Survey:** Upon arrival at discharge port (e.g. Rotterdam, Mundra, Houston), buyer may commission SGS, Bureau Veritas, or Alex Stewart for assay verification.\n4. **Dispute Protection:** If elemental purity deviates beyond the agreed contract tolerance, escrow retains payment for immediate settlement or 100% refund.`;
-        tags = ['Trade Escrow', 'SGS Inspection', 'Dispute Guarantee'];
-      } else if (lower.includes('aluminum') || lower.includes('extrusion') || lower.includes('troma') || lower.includes('wheel')) {
-        reply = `**Aluminum 6063 vs A356 Troma Comparison:**\n\n• **Clean 6063 Extrusions (ISRI Tabor):** 98.6% Al with 0.65% Mg and 0.42% Si. Wrought alloy with zero thermal break. Direct remelt yield is ~94–96%.\n• **A356 Automotive Wheels (ISRI Troma):** 92.5% Al with 7.0% Si. Ideal for high-integrity structural foundry castings (cylinder heads, brackets). Lower melting point but requires silicon control.\n• **Recommendation:** Use 6063 for extrusion billet production, and Troma for foundry die-casting ingots.`;
-        tags = ['Al 6063', 'A356 Wheels', 'Yield Analysis'];
-      } else {
-        reply = `Based on current ISRI guidelines and London Metal Exchange pricing benchmarks, our AI RAG engine has verified that all 10 scrap lots indexed on wastemarket.in feature digital XRF assays and verified yard accreditation. If you provide your target alloy specifications (e.g. max impurity %, required incoterm, or target MT), I will calculate the precise yield and price discount for you.`;
-        tags = ['Marketplace Advisor', 'Assay Check'];
+    try {
+      const ragResult = await queryOpenRouterRag(q, SCRAP_ITEMS);
+      const tags: string[] = [];
+      if (ragResult.matchedItems.length > 0) {
+        ragResult.matchedItems.slice(0, 2).forEach(item => tags.push(item.categoryName || item.title));
       }
+      tags.push('Live Model');
 
       const aiMsg: ChatMessage = {
         id: `ai-${Date.now()}`,
         sender: 'ai',
-        text: reply,
+        text: ragResult.aiMessage,
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         tags,
       };
 
       setMessages((prev) => [...prev, aiMsg]);
+    } catch (err: any) {
+      const fallbackMsg: ChatMessage = {
+        id: `ai-${Date.now()}`,
+        sender: 'ai',
+        text: "Based on ISRI guidelines and London Metal Exchange benchmarks, please verify material lot assays and moisture certificates directly with verified yard documentation.",
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        tags: ['Assay Review'],
+      };
+      setMessages((prev) => [...prev, fallbackMsg]);
+    } finally {
       setIsProcessing(false);
-    }, 450);
+    }
   };
 
   return (
