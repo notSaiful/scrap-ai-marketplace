@@ -25,8 +25,6 @@ import { AIAdvisorPage } from './components/AIAdvisorPage';
 import { ContactUsPage } from './components/ContactUsPage';
 import { QuotesPage, BuyerQuoteEnquiry } from './components/QuotesPage';
 import { LiveScrapTicker } from './components/LiveScrapTicker';
-import { LandedCostSimulator } from './components/LandedCostSimulator';
-import { BentoMasterpiece } from './components/BentoMasterpiece';
 import { evaluateScrapsWithRag } from './services/ragEngine';
 import { ScrapRagResult } from './types/rag';
 
@@ -178,12 +176,6 @@ function MarketplaceContent() {
     setRfqTargetItem(item || null);
     setRfqInitialQty(qty);
     setRfqModalOpen(true);
-  };
-
-  const handleSimulatorRFQ = (payload: { materialName: string; quantityKg: number; targetRate: number; destination: string }) => {
-    const searchWord = payload.materialName.toLowerCase().split(' ')[0];
-    const matched = SCRAP_ITEMS.find(s => s.title.toLowerCase().includes(searchWord) || s.categoryName.toLowerCase().includes(searchWord));
-    handleOpenRFQ(matched || SCRAP_ITEMS[0], payload.quantityKg);
   };
 
   const handleOpenAuth = (mode: 'signin' | 'signup' = 'signin') => {
@@ -477,11 +469,6 @@ function MarketplaceContent() {
             {/* Moving Trust Strip Banner */}
             <TrustStrip />
 
-            {/* Interactive Landed Cost & Freight Simulator */}
-            <LandedCostSimulator
-              onLockRateAndRequestRFQ={handleSimulatorRFQ}
-            />
-
             {/* High-Demand Scrap Listings */}
             <section id="categories" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-6">
               <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8">
@@ -522,12 +509,6 @@ function MarketplaceContent() {
                 ))}
               </div>
             </section>
-
-            {/* Framer-Style Bento Grid: The Zero-Guesswork Standard */}
-            <BentoMasterpiece
-              onOpenRFQ={() => handleOpenRFQ()}
-              onExploreCatalog={() => handleOpenCategoriesPage('all')}
-            />
 
             {/* How It Works (3 steps) */}
             <HowItWorks onOpenRFQ={() => handleOpenRFQ()} />
