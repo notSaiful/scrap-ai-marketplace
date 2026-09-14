@@ -77,30 +77,9 @@ export const MarketlyMissionSection: React.FC<MarketlyMissionSectionProps> = ({
             </div>
 
             {/* Mission Title */}
-            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-white mb-6 leading-[1.15] drop-shadow-md">
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-white leading-[1.15] drop-shadow-md">
               Why We Started wastemarket
             </h2>
-
-            {/* Mission Body Paragraph */}
-            <p className="text-base sm:text-lg lg:text-xl text-slate-100 leading-relaxed font-normal mb-8 max-w-2xl drop-shadow-sm">
-              Too many businesses lose money to short-weighted loads, mismatched quality, and dealers who disappear after the sale. We built wastemarket so buyers never have to gamble on a phone call again — every batch is graded before you commit, every order is backed by a guarantee, and every delivery is tracked from source to your gate.
-            </p>
-
-            {/* Micro Highlights Pill Row */}
-            <div className="flex flex-wrap items-center gap-3 sm:gap-4 pt-4 border-t border-white/20 text-xs sm:text-sm text-white">
-              <div className="flex items-center space-x-2 bg-slate-900/80 backdrop-blur-md border border-white/15 px-3.5 py-1.5 rounded-full shadow-md">
-                <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0" />
-                <span>Zero Short-Weight Risk</span>
-              </div>
-              <div className="flex items-center space-x-2 bg-slate-900/80 backdrop-blur-md border border-white/15 px-3.5 py-1.5 rounded-full shadow-md">
-                <ShieldCheck className="w-4 h-4 text-sky-400 shrink-0" />
-                <span>Pre-Commitment Grade Assay</span>
-              </div>
-              <div className="flex items-center space-x-2 bg-slate-900/80 backdrop-blur-md border border-white/15 px-3.5 py-1.5 rounded-full shadow-md">
-                <ShieldCheck className="w-4 h-4 text-amber-400 shrink-0" />
-                <span>100% Escrow Protection</span>
-              </div>
-            </div>
           </div>
         </div>
 
