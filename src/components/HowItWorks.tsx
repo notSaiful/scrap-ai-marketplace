@@ -31,51 +31,45 @@ export const HowItWorks: React.FC<HowItWorksProps> = ({ onOpenRFQ }) => {
   ];
 
   return (
-    <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14 sm:py-18">
-      {/* Section Header */}
-      <div className="text-center max-w-2xl mx-auto mb-8 sm:mb-10">
-        <h2 className="text-2xl sm:text-4xl font-bold tracking-tight text-[#0f1115]">
-          How it works
-        </h2>
-      </div>
+    <section className="relative w-full min-h-screen flex flex-col justify-between py-12 sm:py-16 overflow-hidden">
+      {/* Full Screen Section Image - 100% natural colors, not darkened */}
+      <img
+        src="/how-it-works-bg.jpg"
+        alt="Automotive scrap car yard piles"
+        className="absolute inset-0 w-full h-full object-cover object-center pointer-events-none"
+      />
 
-      {/* Cinematic Industrial Image Showcase with Step Heading Titles */}
-      <div className="relative rounded-3xl overflow-hidden border border-slate-700/40 shadow-2xl min-h-[360px] sm:min-h-[460px] flex flex-col justify-between p-6 sm:p-10 group">
-        {/* Background Image */}
-        <img
-          src="/how-it-works-bg.jpg"
-          alt="Automotive scrap car yard piles"
-          className="absolute inset-0 w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-1000 pointer-events-none"
-        />
-
-        {/* Multi-layered dark moody gradient overlay for cinematic contrast */}
-        <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/60 to-slate-950/40 pointer-events-none" />
-
-        {/* Top Floating Badge */}
-        <div className="relative z-10 flex items-center justify-between">
-          <div className="inline-flex items-center space-x-2 text-xs font-semibold text-[#38bdf8] bg-slate-950/80 backdrop-blur-md border border-sky-400/30 px-3.5 py-1.5 rounded-full">
-            <Sparkles className="w-3.5 h-3.5 text-[#38bdf8]" />
-            <span>Streamlined 3-Step Process</span>
+      {/* Top Bar: Title & Badge */}
+      <div className="relative z-10 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-white/90 backdrop-blur-md rounded-2xl sm:rounded-full px-6 py-3.5 border border-white/60 shadow-lg max-w-2xl mx-auto">
+          <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-[#0f1115]">
+            How it works
+          </h2>
+          <div className="inline-flex items-center space-x-1.5 text-xs font-semibold text-[#0284c7] bg-sky-50 border border-sky-100 px-3 py-1 rounded-full">
+            <Sparkles className="w-3.5 h-3.5 text-[#0ea5e9]" />
+            <span>3-Step Process</span>
           </div>
         </div>
+      </div>
 
-        {/* Bottom Headings Titles Only */}
-        <div className="relative z-10 grid grid-cols-1 md:grid-cols-3 gap-5 sm:gap-6 pt-16">
+      {/* Bottom Step Titles Bar */}
+      <div className="relative z-10 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 pt-20">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
           {steps.map((step, idx) => {
             const Icon = step.icon;
             return (
               <div
                 key={idx}
-                className="flex items-center gap-3.5 bg-slate-950/70 backdrop-blur-md border border-white/15 hover:border-sky-400/50 rounded-2xl p-4 sm:p-5 transition-all group/item"
+                className="flex items-center gap-4 bg-white/92 backdrop-blur-md border border-white/80 hover:border-sky-400/60 rounded-2xl p-4 sm:p-5 shadow-xl transition-all group"
               >
-                <div className="w-10 h-10 rounded-xl bg-sky-500/20 border border-sky-400/30 flex items-center justify-center text-white shrink-0 group-hover/item:scale-105 group-hover/item:bg-[#0ea5e9] transition-all">
-                  <Icon className="w-5 h-5 text-[#38bdf8] group-hover/item:text-white transition-colors" />
+                <div className="w-11 h-11 rounded-xl bg-gradient-to-tr from-sky-50 to-blue-50 border border-sky-100 flex items-center justify-center text-[#0ea5e9] shrink-0 group-hover:scale-105 group-hover:bg-[#0ea5e9] group-hover:text-white transition-all shadow-2xs">
+                  <Icon className="w-5 h-5 transition-colors" />
                 </div>
                 <div>
-                  <span className="text-[11px] font-mono font-bold text-[#38bdf8] tracking-widest uppercase block mb-0.5">
+                  <span className="text-[11px] font-mono font-bold text-[#0284c7] tracking-widest uppercase block mb-0.5">
                     Step {step.number}
                   </span>
-                  <h3 className="text-sm sm:text-base font-bold text-white tracking-tight">
+                  <h3 className="text-base sm:text-lg font-bold text-[#0f1115] tracking-tight">
                     {step.title}
                   </h3>
                 </div>
