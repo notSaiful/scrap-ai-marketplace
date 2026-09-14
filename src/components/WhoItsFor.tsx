@@ -75,6 +75,72 @@ export const WhoItsFor: React.FC<WhoItsForProps> = ({ onOpenRFQ, onExploreCatalo
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-7">
           {targetSegments.map((seg, idx) => {
             const Icon = seg.icon;
+            const isManufacturer = idx === 0;
+
+            if (isManufacturer) {
+              return (
+                <div
+                  key={idx}
+                  className="relative rounded-3xl p-7 sm:p-8 border border-slate-700/50 shadow-[0_12px_36px_rgba(0,0,0,0.25)] hover:shadow-[0_20px_50px_rgba(0,0,0,0.35)] transition-all flex flex-col justify-between group overflow-hidden"
+                >
+                  {/* Background Image with Dark Industrial Gradients */}
+                  <img
+                    src="/manufacturing-bg.jpg"
+                    alt="Scrap claw crane lifting metal scrap at yard"
+                    className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 pointer-events-none"
+                  />
+                  {/* Multi-layer Dark Gradient for Readability */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/85 to-slate-900/60 pointer-events-none" />
+                  <div className="absolute inset-0 bg-slate-950/40 pointer-events-none" />
+
+                  <div className="relative z-10">
+                    {/* Top Row: Icon + Badge */}
+                    <div className="flex items-center justify-between mb-5">
+                      <div className="w-12 h-12 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center text-white group-hover:scale-105 group-hover:bg-[#0ea5e9] transition-all shadow-md">
+                        <Icon className="w-6 h-6" />
+                      </div>
+                      <span className="text-[11px] font-semibold text-[#38bdf8] bg-sky-950/80 backdrop-blur-md border border-sky-400/30 px-2.5 py-1 rounded-full">
+                        {seg.highlight}
+                      </span>
+                    </div>
+
+                    {/* Title & Subtitle */}
+                    <h3 className="text-lg sm:text-xl font-bold text-white tracking-tight mb-1">
+                      {seg.title}
+                    </h3>
+                    <div className="text-xs text-[#38bdf8] font-semibold mb-3">
+                      {seg.subtitle}
+                    </div>
+
+                    <p className="text-xs sm:text-sm text-slate-200 leading-relaxed mb-6 font-normal">
+                      {seg.description}
+                    </p>
+
+                    {/* Feature Checklist */}
+                    <ul className="space-y-2 mb-6 pt-4 border-t border-white/15">
+                      {seg.benefits.map((b, bi) => (
+                        <li key={bi} className="flex items-center text-xs text-slate-100 gap-2">
+                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                          <span>{b}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+
+                  {/* Card Action */}
+                  <div className="relative z-10">
+                    <button
+                      onClick={onOpenRFQ}
+                      className="w-full mt-2 py-2.5 px-4 rounded-xl bg-[#0ea5e9] hover:bg-[#0284c7] text-white text-xs font-semibold flex items-center justify-center gap-1.5 transition-all shadow-md cursor-pointer group/btn active:scale-98"
+                    >
+                      <span>Get a Quote</span>
+                      <ArrowRight className="w-3.5 h-3.5 group-hover/btn:translate-x-1 transition-transform" />
+                    </button>
+                  </div>
+                </div>
+              );
+            }
+
             return (
               <div
                 key={idx}
