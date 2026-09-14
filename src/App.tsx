@@ -522,10 +522,7 @@ function MarketplaceContent() {
             </div>
 
             {/* Who It's For: Built for Businesses That Buy in Bulk */}
-            <WhoItsFor
-              onOpenRFQ={() => handleOpenRFQ()}
-              onExploreCatalog={() => handleOpenCategoriesPage('all')}
-            />
+            <WhoItsFor />
 
             {/* What We Source: Materials We Source */}
             <WhatWeSource

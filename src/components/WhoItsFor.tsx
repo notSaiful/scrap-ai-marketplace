@@ -1,12 +1,12 @@
 import React from 'react';
-import { ShieldCheck, ArrowUpRight } from 'lucide-react';
+import { ShieldCheck } from 'lucide-react';
 
 interface WhoItsForProps {
   onOpenRFQ?: () => void;
   onExploreCatalog?: () => void;
 }
 
-export const WhoItsFor: React.FC<WhoItsForProps> = ({ onOpenRFQ, onExploreCatalog }) => {
+export const WhoItsFor: React.FC<WhoItsForProps> = () => {
   const panels = [
     {
       id: 'manufacturing',
@@ -51,35 +51,30 @@ export const WhoItsFor: React.FC<WhoItsForProps> = ({ onOpenRFQ, onExploreCatalo
           {panels.map((panel, idx) => (
             <div
               key={idx}
-              onClick={onOpenRFQ}
-              className="relative h-80 sm:h-[420px] rounded-3xl overflow-hidden shadow-[0_12px_36px_rgba(0,0,0,0.12)] hover:shadow-[0_24px_50px_rgba(0,0,0,0.25)] border border-slate-700/40 cursor-pointer group transition-all duration-500 flex flex-col justify-end p-6 sm:p-8"
+              className="relative h-80 sm:h-[420px] rounded-3xl overflow-hidden shadow-[0_12px_36px_rgba(0,0,0,0.12)] border border-slate-700/40 flex flex-col justify-end p-6 sm:p-8"
             >
               {/* Background Image */}
               <img
                 src={panel.image}
                 alt={panel.alt}
-                className="absolute inset-0 w-full h-full object-cover object-center group-hover:scale-110 transition-transform duration-700 pointer-events-none"
+                className="absolute inset-0 w-full h-full object-cover object-center pointer-events-none"
               />
 
               {/* Multi-layered cinematic gradient overlay */}
-              <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/60 to-slate-900/20 group-hover:via-slate-950/50 transition-colors pointer-events-none" />
+              <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/60 to-slate-900/20 pointer-events-none" />
               <div className="absolute inset-0 bg-slate-950/20 pointer-events-none" />
 
-              {/* Content: Just the name and subtle indicator */}
-              <div className="relative z-10 flex items-end justify-between">
-                <div>
-                  <span className="text-[11px] font-mono font-bold text-[#38bdf8] tracking-widest uppercase block mb-1">
-                    0{idx + 1}
-                  </span>
-                  <h3 className="text-2xl sm:text-3xl font-bold text-white tracking-tight group-hover:text-sky-300 transition-colors">
-                    {panel.name}
-                  </h3>
-                </div>
-
-                {/* Arrow Action Bubble */}
-                <div className="w-11 h-11 rounded-2xl bg-white/15 backdrop-blur-md border border-white/25 flex items-center justify-center text-white group-hover:bg-[#0ea5e9] group-hover:scale-110 transition-all shadow-lg">
-                  <ArrowUpRight className="w-5 h-5 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
-                </div>
+              {/* Content: Just the name and subtitle */}
+              <div className="relative z-10">
+                <span className="text-[11px] font-mono font-bold text-[#38bdf8] tracking-widest uppercase block mb-1">
+                  0{idx + 1}
+                </span>
+                <h3 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
+                  {panel.name}
+                </h3>
+                <p className="text-xs sm:text-sm text-slate-300 font-medium mt-1">
+                  {panel.subtitle}
+                </p>
               </div>
             </div>
           ))}
