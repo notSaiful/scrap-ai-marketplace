@@ -225,12 +225,12 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
                 </div>
               </div>
 
-              {/* Prominent Request Quote Button */}
+              {/* Prominent Place Order Button */}
               <button
                 onClick={() => onOpenRFQ(item, quantity)}
                 className="w-full bg-[#0ea5e9] hover:bg-[#0284c7] text-white font-semibold text-sm sm:text-base py-3.5 px-6 rounded-xl transition-all shadow-[0_8px_20px_rgba(14,165,233,0.3)] active:scale-98 cursor-pointer flex items-center justify-center gap-2 group"
               >
-                <span>Request Quote ({quantity.toLocaleString('en-IN')} kg)</span>
+                <span>Place Order ({quantity.toLocaleString('en-IN')} kg)</span>
                 <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
               </button>
 

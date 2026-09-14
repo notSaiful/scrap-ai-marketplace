@@ -472,7 +472,7 @@ export const CategoriesPage: React.FC<CategoriesPageProps> = ({
                         </div>
                       </div>
 
-                      {/* Card Action Footer: Request Quote Button */}
+                      {/* Card Action Footer: Place Order Button */}
                       <div className="p-3.5 pt-0">
                         <button
                           type="button"
@@ -482,7 +482,7 @@ export const CategoriesPage: React.FC<CategoriesPageProps> = ({
                           }}
                           className="w-full bg-[#0ea5e9] hover:bg-[#0284c7] text-white text-xs font-semibold py-2 px-3 rounded-[6px] transition-all shadow-2xs active:scale-98 cursor-pointer flex items-center justify-center gap-1.5"
                         >
-                          <span>Request Quote</span>
+                          <span>Place Order</span>
                         </button>
                       </div>
 

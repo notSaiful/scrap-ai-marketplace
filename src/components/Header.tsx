@@ -78,7 +78,7 @@ export const Header: React.FC<HeaderProps> = ({
             }}
             className={`transition-colors cursor-pointer ${currentPage === 'quotes' ? 'text-[#0ea5e9] font-bold' : 'hover:text-[#0f1115]'}`}
           >
-            Quotes
+            Orders
           </button>
 
           {onOpenAdvisorPage && (
@@ -173,14 +173,14 @@ export const Header: React.FC<HeaderProps> = ({
                         if (onOpenQuotes) {
                           onOpenQuotes();
                         } else {
-                          alert('You have 2 active proforma quotes pending yard confirmation.');
+                          alert('You have 2 active proforma orders pending yard confirmation.');
                         }
                         setShowProfileMenu(false);
                       }}
                       className="w-full px-4 py-2 text-left hover:bg-slate-50 flex items-center space-x-2.5 transition-colors cursor-pointer"
                     >
                       <FileText className="w-4 h-4 text-[#0ea5e9]" />
-                      <span>My Active Quotes</span>
+                      <span>My Active Orders</span>
                     </button>
                   </div>
 
@@ -267,7 +267,7 @@ export const Header: React.FC<HeaderProps> = ({
               currentPage === 'quotes' ? 'bg-sky-50 text-[#0ea5e9]' : 'text-[#495057] hover:bg-slate-50 hover:text-[#0f1115]'
             }`}
           >
-            Quotes
+            Orders
           </button>
 
           {onOpenAdvisorPage && (

@@ -155,7 +155,7 @@ export const ScrapCard: React.FC<ScrapCardProps> = ({
             }}
             className="bg-[#0ea5e9] hover:bg-[#0284c7] text-white px-3.5 py-1.5 rounded-full text-xs font-bold shadow-[0_2px_8px_rgba(14,165,233,0.3)] transition-all active:scale-[0.98] whitespace-nowrap cursor-pointer flex items-center gap-1"
           >
-            <span>Quote</span>
+            <span>Order</span>
             <ArrowRight className="w-3 h-3" />
           </button>
         </div>

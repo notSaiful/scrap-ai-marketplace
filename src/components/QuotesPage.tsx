@@ -306,7 +306,7 @@ export const QuotesPage: React.FC<QuotesPageProps> = ({
                 <span className="text-slate-700 font-semibold">Buyer Dashboard</span>
               </div>
               <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-[#0f1115]">
-                My Quotes
+                My Orders
               </h1>
             </div>
 
@@ -315,7 +315,7 @@ export const QuotesPage: React.FC<QuotesPageProps> = ({
               className="bg-[#0ea5e9] hover:bg-[#0284c7] text-white px-5 py-2.5 rounded-xl text-xs font-semibold transition-all flex items-center space-x-2 shadow-[0_4px_14px_rgba(14,165,233,0.3)] cursor-pointer active:scale-98"
             >
               <Plus className="w-4 h-4" />
-              <span>New Quote</span>
+              <span>New Order</span>
             </button>
           </div>
 
@@ -327,7 +327,7 @@ export const QuotesPage: React.FC<QuotesPageProps> = ({
               </div>
               {/* Exact user requested copy */}
               <h3 className="text-base font-bold text-[#0f1115]">
-                You haven't requested a quote yet.
+                You haven't placed an order yet.
               </h3>
               <p className="text-xs sm:text-sm text-slate-500 mt-1 mb-6">
                 Browse materials to get started.

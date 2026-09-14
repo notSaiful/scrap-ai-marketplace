@@ -77,7 +77,7 @@ export const MarketlyFooter: React.FC<MarketlyFooterProps> = ({
                     onClick={onOpenQuotes} 
                     className="hover:text-[#0f1115] transition-colors cursor-pointer"
                   >
-                    Quotes & Orders
+                    My Orders
                   </button>
                 </li>
               )}
