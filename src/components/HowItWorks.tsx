@@ -31,18 +31,18 @@ export const HowItWorks: React.FC<HowItWorksProps> = ({ onOpenRFQ }) => {
   ];
 
   return (
-    <section className="relative py-20 sm:py-28 overflow-hidden bg-slate-950 text-white border-y border-white/[0.08]">
+    <section className="relative py-20 sm:py-28 overflow-hidden bg-white text-slate-900 border-y border-black/[0.06]">
       {/* Subtle Background Radial Glow */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[400px] bg-sky-500/10 blur-[120px] rounded-full pointer-events-none" />
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[400px] bg-sky-100/40 blur-[120px] rounded-full pointer-events-none" />
 
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
         {/* Section Header */}
         <div className="text-center max-w-2xl mx-auto mb-12 sm:mb-16">
-          <div className="inline-flex items-center space-x-2 text-xs font-semibold text-sky-300 bg-sky-500/20 border border-sky-400/40 px-3.5 py-1.5 rounded-full mb-4 uppercase tracking-wider backdrop-blur-md">
-            <Sparkles className="w-3.5 h-3.5 text-sky-400" />
+          <div className="inline-flex items-center space-x-2 text-xs font-semibold text-[#0ea5e9] bg-sky-50 border border-sky-100 px-3.5 py-1.5 rounded-full mb-4 uppercase tracking-wider">
+            <Sparkles className="w-3.5 h-3.5 text-[#0ea5e9]" />
             <span>Industrial Trade Pipeline</span>
           </div>
-          <h2 className="text-3xl sm:text-5xl font-extrabold tracking-tight text-white drop-shadow-md">
+          <h2 className="text-3xl sm:text-5xl font-extrabold tracking-tight text-[#0f1115]">
             How it works
           </h2>
         </div>
@@ -54,7 +54,7 @@ export const HowItWorks: React.FC<HowItWorksProps> = ({ onOpenRFQ }) => {
             return (
               <div
                 key={idx}
-                className="relative rounded-3xl overflow-hidden min-h-[380px] sm:min-h-[440px] p-6 sm:p-8 flex flex-col justify-between group border border-white/15 hover:border-sky-400/60 shadow-[0_16px_40px_rgba(0,0,0,0.35)] hover:shadow-[0_24px_50px_rgba(14,165,233,0.25)] transition-all duration-300 hover:-translate-y-1"
+                className="relative rounded-3xl overflow-hidden min-h-[380px] sm:min-h-[440px] p-6 sm:p-8 flex flex-col justify-between group border border-slate-200/80 hover:border-sky-400/80 shadow-[0_12px_36px_rgba(0,0,0,0.12)] hover:shadow-[0_24px_50px_rgba(14,165,233,0.22)] transition-all duration-300 hover:-translate-y-1"
               >
                 {/* Background Image */}
                 <img
