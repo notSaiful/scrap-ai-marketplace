@@ -12,11 +12,11 @@ export const WhatWeSource: React.FC<WhatWeSourceProps> = ({
 }) => {
   const materials = [
     {
-      name: 'Steel Scrap',
+      name: 'Metal Scrap',
       categoryKey: 'ferrous',
-      grade: 'HMS 1/2 · Shredded 211 · Prime Plate & Structural',
+      grade: 'HMS 1/2 · Shredded 211 · Prime Plate & Copper/Alloy Lots',
       image: '/images/steel-scrap.jpg',
-      specs: 'ISRI 200-206 compliant, density verified, EAF ready',
+      specs: 'ISRI 200-206 compliant, density verified, foundry & smelter ready',
     },
     {
       name: 'Plastic Waste',
@@ -33,11 +33,11 @@ export const WhatWeSource: React.FC<WhatWeSourceProps> = ({
       specs: 'Wire tied 550kg bales, moisture <8.5%, mill certified',
     },
     {
-      name: 'Textile Waste',
-      categoryKey: 'textile',
-      grade: 'Post-Industrial Cotton Clippings · Synthetic Fiber Waste · Yarn Bales',
-      image: '/images/textile-waste.jpg',
-      specs: 'Color-sorted clips, 100% pure fiber, zero elastane contamination',
+      name: 'E-Waste',
+      categoryKey: 'e-waste',
+      grade: 'Server Boards · Telecom Scrap · Shredded Circuit Boards',
+      image: '/images/e-waste.jpg',
+      specs: 'Assayed precious metal yields (Au/Ag/Pd), depopulated PCB lots',
     },
   ];
 
@@ -80,7 +80,8 @@ export const WhatWeSource: React.FC<WhatWeSourceProps> = ({
                     if (mat.categoryKey === 'ferrous') target.src = 'https://images.unsplash.com/photo-1504917599217-d4dc5ebe6122?auto=format&fit=crop&w=800&q=80';
                     else if (mat.categoryKey === 'plastics') target.src = 'https://images.unsplash.com/photo-1528190336454-13cd56b45b5a?auto=format&fit=crop&w=800&q=80';
                     else if (mat.categoryKey === 'paper') target.src = 'https://images.unsplash.com/photo-1532996122724-e3c354a0b15b?auto=format&fit=crop&w=800&q=80';
-                    else target.src = 'https://images.unsplash.com/photo-1558769132-cb1aea458c5e?auto=format&fit=crop&w=800&q=80';
+                    else if (mat.categoryKey === 'e-waste') target.src = 'https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&w=800&q=80';
+                    else target.src = 'https://images.unsplash.com/photo-1504917599217-d4dc5ebe6122?auto=format&fit=crop&w=800&q=80';
                   }}
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-60 group-hover:opacity-40 transition-opacity" />
