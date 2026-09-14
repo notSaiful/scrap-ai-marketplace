@@ -31,66 +31,63 @@ export const HowItWorks: React.FC<HowItWorksProps> = ({ onOpenRFQ }) => {
   ];
 
   return (
-    <section className="relative py-16 sm:py-24 bg-white border-y border-black/[0.06] overflow-hidden">
-      {/* Background Architectural Blueprint / Subtle Grid Element */}
-      <div
-        className="absolute inset-0 opacity-[0.035] pointer-events-none"
-        style={{
-          backgroundImage:
-            'linear-gradient(to right, #0284c7 1px, transparent 1px), linear-gradient(to bottom, #0284c7 1px, transparent 1px)',
-          backgroundSize: '48px 48px',
-        }}
+    <section className="relative py-20 sm:py-28 overflow-hidden min-h-[500px] flex items-center justify-center text-white border-y border-black/[0.1]">
+      {/* Background Scrap Yard Image with Full Fill */}
+      <img
+        src="/how-it-works-scrap-bg.jpg"
+        alt="Scrap yard and material processing"
+        className="absolute inset-0 w-full h-full object-cover object-center select-none pointer-events-none"
       />
 
-      {/* Ambient Soft Glow Spheres */}
-      <div className="absolute -top-24 left-1/2 -translate-x-1/2 w-[650px] h-[350px] bg-gradient-to-b from-sky-200/40 via-blue-100/20 to-transparent rounded-full blur-3xl pointer-events-none -z-10" />
-      <div className="absolute -bottom-20 right-10 w-[400px] h-[300px] bg-sky-100/30 rounded-full blur-3xl pointer-events-none -z-10" />
+      {/* Cinematic Dark Gradient Overlay for Maximum Text Contrast & Clarity */}
+      <div className="absolute inset-0 bg-gradient-to-b from-slate-950/90 via-slate-950/80 to-slate-950/90 pointer-events-none" />
+      <div className="absolute inset-0 bg-black/40 pointer-events-none" />
 
-      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
         {/* Section Header */}
         <div className="text-center max-w-2xl mx-auto mb-14 sm:mb-16">
-          <div className="inline-flex items-center space-x-2 text-xs font-semibold text-[#0ea5e9] bg-sky-50 border border-sky-200/80 px-3.5 py-1.5 rounded-full mb-4 uppercase tracking-wider shadow-2xs">
-            <Sparkles className="w-3.5 h-3.5 text-[#0ea5e9]" />
+          <div className="inline-flex items-center space-x-2 text-xs font-semibold text-sky-300 bg-sky-500/20 border border-sky-400/40 px-3.5 py-1.5 rounded-full mb-4 uppercase tracking-wider backdrop-blur-md">
+            <Sparkles className="w-3.5 h-3.5 text-sky-400" />
             <span>Industrial Trade Pipeline</span>
           </div>
-          <h2 className="text-3xl sm:text-5xl font-bold tracking-tight text-[#0f1115] mb-3">
+          <h2 className="text-3xl sm:text-5xl font-extrabold tracking-tight text-white drop-shadow-md">
             How it works
           </h2>
         </div>
 
-        {/* 3 Interactive Pipeline Steps with Horizontal Connecting Flow */}
-        <div className="relative grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8 items-stretch">
-          {/* Subtle Desktop Connector Line */}
-          <div className="hidden md:block absolute top-1/2 left-12 right-12 h-0.5 bg-gradient-to-r from-sky-400/0 via-sky-400/30 to-sky-400/0 -translate-y-6 pointer-events-none z-0" />
-
+        {/* 3 Steps - Minimal Text Overlay (No Cards) */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 sm:gap-12 relative">
           {steps.map((step, idx) => {
             const Icon = step.icon;
             return (
               <div
                 key={idx}
-                className="relative z-10 bg-white hover:bg-slate-50/70 border border-black/[0.08] hover:border-[#0ea5e9]/70 rounded-3xl p-7 sm:p-8 shadow-[0_4px_24px_rgba(0,0,0,0.03)] hover:shadow-[0_16px_40px_rgba(14,165,233,0.12)] transition-all duration-300 flex flex-col justify-between group"
+                className="flex flex-col items-center md:items-start text-center md:text-left space-y-3 group"
               >
-                {/* Top Badge & Step Number */}
-                <div>
-                  <div className="flex items-center justify-between mb-6">
-                    <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-sky-50 to-blue-50 border border-sky-100 flex items-center justify-center text-[#0284c7] group-hover:scale-110 group-hover:bg-[#0ea5e9] group-hover:text-white transition-all shadow-2xs">
-                      <Icon className="w-6 h-6" />
-                    </div>
-                    <span className="font-mono text-2xl font-black text-slate-300 group-hover:text-[#0ea5e9] transition-colors">
-                      0{idx + 1}
-                    </span>
+                {/* Step Number & Icon Header */}
+                <div className="flex items-center space-x-3 mb-1">
+                  <div className="w-10 h-10 rounded-xl bg-sky-500/20 border border-sky-400/40 flex items-center justify-center text-sky-400 backdrop-blur-md group-hover:scale-110 group-hover:bg-sky-500 group-hover:text-white transition-all">
+                    <Icon className="w-5 h-5" />
                   </div>
-
-                  {/* Title */}
-                  <h3 className="text-xl font-bold text-[#0f1115] tracking-tight mb-2 group-hover:text-[#0284c7] transition-colors">
-                    {step.title}
-                  </h3>
+                  <span className="font-mono text-2xl sm:text-3xl font-black text-sky-400 tracking-wider">
+                    {step.number}
+                  </span>
                 </div>
 
-                {/* Bottom Step Indicator Pill */}
-                <div className="mt-8 pt-4 border-t border-slate-100 flex items-center justify-between text-xs text-[#0284c7] font-semibold">
-                  <span className="tracking-wide uppercase text-[11px]">Verified Protocol</span>
-                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                {/* Step Title */}
+                <h3 className="text-xl sm:text-2xl font-bold text-white tracking-tight drop-shadow-sm group-hover:text-sky-300 transition-colors">
+                  {step.title}
+                </h3>
+
+                {/* Step Description */}
+                <p className="text-sm sm:text-base text-slate-300 font-normal leading-relaxed max-w-xs">
+                  {step.description}
+                </p>
+
+                {/* Protocol Accent Tag */}
+                <div className="pt-2 flex items-center space-x-2 text-xs text-sky-300/80 font-medium">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                  <span>{step.highlight}</span>
                 </div>
               </div>
             );
