@@ -483,9 +483,6 @@ function MarketplaceContent() {
               onOpenRFQ={() => handleOpenRFQ()}
               onExploreLots={() => handleOpenCategoriesPage('all')}
             />
-
-            {/* Newsletter Subscription Card */}
-            <MarketlyNewsletter />
           </div>
         )}
       </main>
