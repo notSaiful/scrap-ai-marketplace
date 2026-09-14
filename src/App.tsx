@@ -449,11 +449,6 @@ function MarketplaceContent() {
               onSearchSubmit={handleSearchSubmit}
             />
 
-            {/* Financial-Grade Live Scrap Spot Ticker Bar */}
-            <LiveScrapTicker
-              onSelectCategory={(cat) => handleOpenCategoriesPage(cat)}
-            />
-
             {/* Moving Trust Strip Banner */}
             <TrustStrip />
 
