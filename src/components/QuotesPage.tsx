@@ -132,7 +132,8 @@ export const QuotesPage: React.FC<QuotesPageProps> = ({
         );
       case 'confirmed':
         return (
-          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-[#0ea5e9] text-white shadow-2xs">
+          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-emerald-600 text-white shadow-2xs">
+            <Check className="w-3.5 h-3.5 mr-1 text-white" />
             Confirmed
           </span>
         );
@@ -667,7 +668,7 @@ export const QuotesPage: React.FC<QuotesPageProps> = ({
                   <ArrowRight className="w-4 h-4" />
                 </button>
               ) : isStageConfirmedOrHigher ? (
-                <div className="w-full bg-[#0ea5e9] text-white rounded-xl py-3.5 px-4 text-center font-bold text-xs flex items-center justify-center gap-2 shadow-[0_4px_14px_rgba(14,165,233,0.3)]">
+                <div className="w-full bg-emerald-600 text-white rounded-xl py-3.5 px-4 text-center font-bold text-xs flex items-center justify-center gap-2 shadow-[0_4px_14px_rgba(5,150,105,0.3)]">
                   <Check className="w-4 h-4 text-white" />
                   <span>Order Confirmed & Locked</span>
                 </div>
