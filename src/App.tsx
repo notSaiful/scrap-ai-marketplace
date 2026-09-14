@@ -217,12 +217,8 @@ function MarketplaceContent() {
       const orderId = `WM-ORD-${Math.floor(1000 + Math.random() * 9000)}`;
 
       const rawPrice = submittedData.targetPrice || submittedData.item?.pricePerTon || 550;
-      const inrPerTon = rawPrice > 1000 ? Math.round(rawPrice * 83) : Math.round(rawPrice * 85);
-      const pricePerKg = submittedData.targetPrice && submittedData.targetPrice < 1000
-        ? submittedData.targetPrice
-        : Math.max(1, Math.round(inrPerTon / 1000));
-      const totalAmount = pricePerKg * qty;
       const deliveryLoc = submittedData.destinationPort || 'Bengaluru, Karnataka';
+      const nowTime = new Intl.DateTimeFormat('en-US', { hour: 'numeric', minute: 'numeric', hour12: true }).format(new Date());
 
       const newQuote: BuyerQuoteEnquiry = {
         id: `quote-${Date.now()}`,
@@ -235,36 +231,11 @@ function MarketplaceContent() {
         deliveryLocation: deliveryLoc,
         requestDate: todayStr,
         productImage: submittedData.item?.primaryImage || 'https://images.unsplash.com/photo-1504917599217-d4dc5ebe6122?auto=format&fit=crop&w=800&q=80',
-        status: 'offer_ready',
-        offer: {
-          pricePerKg: pricePerKg,
-          pricePerTon: pricePerKg * 1000,
-          totalAmount: totalAmount,
-          deliveryWindow: '3–5 Business Days (Guaranteed Dispatch)',
-          batchPhoto: submittedData.item?.primaryImage || 'https://images.unsplash.com/photo-1504917599217-d4dc5ebe6122?auto=format&fit=crop&w=1200&q=80',
-          aiGradeReport: {
-            purityScore: submittedData.item?.aiSpecs?.purityScore || 98.8,
-            spectrographicSummary: submittedData.item?.aiSpecs?.spectrographicSummary || 'LiDAR laser scan + digital assay verified.',
-            densityRating: 'High-Density Industrial Bulk Lot',
-            verifiedDate: todayStr,
-          },
-          supplierName: submittedData.item?.supplier?.name || 'Verified Partner Yard',
-          supplierOrigin: submittedData.item?.origin || 'Bengaluru, India',
-        },
+        status: 'quote_received',
         timeline: {
-          quoteReceivedAt: `${todayStr}, 09:30 AM`,
-          sourcingStartedAt: `${todayStr}, 10:15 AM`,
-          offerConfirmedAt: `${todayStr}, 02:40 PM`,
-          trackingCarrier: 'CONCOR Multi-Modal Logistics',
+          quoteReceivedAt: `${todayStr}, ${nowTime}`,
         },
-        messages: [
-          {
-            id: 'init-1',
-            sender: 'team',
-            text: `Hello! We've prepared and verified your quote for ${qty.toLocaleString('en-IN')} kg of ${itemTitle}. Let us know if you need any adjustments or proceed to Confirm Order.`,
-            timestamp: todayStr,
-          },
-        ],
+        messages: [],
       };
 
       setBuyerQuotes((prev) => {
@@ -405,9 +376,26 @@ function MarketplaceContent() {
                       status: newStatus,
                       timeline: q.timeline || {
                         quoteReceivedAt: q.requestDate,
-                        sourcingStartedAt: 'Today, 10:15 AM',
-                        offerConfirmedAt: 'Just now',
                       },
+                    };
+                  }
+                  return q;
+                });
+                try {
+                  localStorage.setItem('wm_buyer_quotes', JSON.stringify(updated));
+                } catch (e) {
+                  console.error(e);
+                }
+                return updated;
+              });
+            }}
+            onUpdateQuoteFull={(quoteId, partial) => {
+              setBuyerQuotes((prev) => {
+                const updated = prev.map((q) => {
+                  if (q.id === quoteId) {
+                    return {
+                      ...q,
+                      ...partial,
                     };
                   }
                   return q;
@@ -469,44 +457,39 @@ function MarketplaceContent() {
             {/* Moving Trust Strip Banner */}
             <TrustStrip />
 
-            {/* High-Demand Scrap Listings */}
+            {/* Direct Sourcing & Custom RFQ Banner */}
             <section id="categories" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-6">
-              <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8">
-                <div>
-                  <div className="inline-flex items-center space-x-2 text-xs font-semibold text-[#0ea5e9] mb-2 uppercase tracking-wider bg-sky-50 border border-sky-100 px-3 py-0.5 rounded-full">
-                    <span className="w-2 h-2 rounded-full bg-[#0ea5e9] animate-ping" />
-                    <span>Verified Yard Inventory</span>
+              <div className="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 rounded-3xl p-6 sm:p-10 border border-slate-700/50 shadow-xl text-white relative overflow-hidden">
+                <div className="absolute top-0 right-0 -mr-16 -mt-16 w-80 h-80 rounded-full bg-[#0ea5e9]/10 blur-3xl pointer-events-none" />
+                <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+                  <div className="max-w-2xl">
+                    <div className="inline-flex items-center space-x-2 text-xs font-semibold text-[#38bdf8] mb-3 uppercase tracking-wider bg-sky-950/80 border border-sky-800/60 px-3.5 py-1 rounded-full">
+                      <span className="w-2 h-2 rounded-full bg-[#38bdf8] animate-ping" />
+                      <span>On-Demand Industrial Sourcing</span>
+                    </div>
+                    <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-white">
+                      Source Any Scrap Lot Directly From Accredited Yards
+                    </h2>
+                    <p className="text-xs sm:text-sm text-slate-300 mt-2 leading-relaxed">
+                      No fake stock. Submit your exact scrap specifications, required tonnage, and destination plant gate. We verify availability with certified yards, coordinate digital assay, and deliver transparent landed proforma quotes.
+                    </p>
                   </div>
-                  <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-[#0f1115] tracking-tight">
-                    High-Demand Scrap Lots
-                  </h2>
-                  <p className="text-xs sm:text-sm text-slate-500 mt-1">
-                    Direct-to-mill industrial feedstock in kg with transparent spot pricing and pre-dispatch XRF assay.
-                  </p>
+                  <div className="shrink-0 flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full md:w-auto">
+                    <button
+                      onClick={() => handleOpenRFQ()}
+                      className="bg-[#0ea5e9] hover:bg-[#0284c7] text-white text-xs sm:text-sm font-semibold px-6 py-3 rounded-xl inline-flex items-center justify-center space-x-2 transition-all shadow-[0_4px_14px_rgba(14,165,233,0.4)] cursor-pointer active:scale-98"
+                    >
+                      <span>Request Custom Quote</span>
+                      <ArrowRight className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => handleOpenCategoriesPage('all')}
+                      className="bg-white/10 hover:bg-white/20 border border-white/20 text-white text-xs sm:text-sm font-semibold px-5 py-3 rounded-xl inline-flex items-center justify-center transition-all cursor-pointer"
+                    >
+                      Browse Material Categories
+                    </button>
+                  </div>
                 </div>
-
-                <div className="shrink-0">
-                  <button
-                    onClick={() => handleOpenCategoriesPage('all')}
-                    className="group bg-[#0ea5e9] hover:bg-[#0284c7] text-white text-xs sm:text-sm font-semibold px-5 py-2.5 rounded-full inline-flex items-center space-x-2 transition-all shadow-[0_4px_14px_rgba(14,165,233,0.3)] hover:shadow-[0_6px_20px_rgba(14,165,233,0.4)] cursor-pointer active:scale-98"
-                  >
-                    <span>View All {SCRAP_ITEMS.length} Lots</span>
-                    <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                  </button>
-                </div>
-              </div>
-
-              {/* 4 High-Demand Scrap Cards */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                {highDemandLots.map((scrap) => (
-                  <ScrapCard
-                    key={scrap.id}
-                    item={scrap}
-                    ragResult={ragResultsMap.get(scrap.id)}
-                    onSelect={(item) => setSelectedScrapItem(item)}
-                    onQuickRFQ={(item) => handleOpenRFQ(item)}
-                  />
-                ))}
               </div>
             </section>
 

@@ -22,6 +22,8 @@ import {
   Info,
   Clock,
   ArrowRight,
+  Settings,
+  Edit3,
 } from 'lucide-react';
 
 export interface QuoteMessage {
@@ -85,6 +87,7 @@ interface QuotesPageProps {
   onGoHome: () => void;
   onOpenNewRFQ: (defaultMaterial?: string) => void;
   onUpdateQuoteStatus?: (quoteId: string, newStatus: BuyerQuoteEnquiry['status']) => void;
+  onUpdateQuoteFull?: (quoteId: string, partial: Partial<BuyerQuoteEnquiry>) => void;
   onAddQuoteMessage?: (quoteId: string, messageText: string) => void;
   onOpenContactUs?: () => void;
 }
@@ -94,6 +97,7 @@ export const QuotesPage: React.FC<QuotesPageProps> = ({
   onGoHome,
   onOpenNewRFQ,
   onUpdateQuoteStatus,
+  onUpdateQuoteFull,
   onAddQuoteMessage,
 }) => {
   // Always default to list view (activeQuoteId = null) so user sees all quotes in order first, clicking any opens the thread
@@ -104,8 +108,89 @@ export const QuotesPage: React.FC<QuotesPageProps> = ({
   const [shareModalOpen, setShareModalOpen] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
 
+  const [trackingModalOpen, setTrackingModalOpen] = useState(false);
+  const [editStatus, setEditStatus] = useState<BuyerQuoteEnquiry['status']>('quote_received');
+  const [editCarrier, setEditCarrier] = useState('');
+  const [editSlipId, setEditSlipId] = useState('');
+  const [editOfferPricePerKg, setEditOfferPricePerKg] = useState<number>(0);
+  const [editDeliveryWindow, setEditDeliveryWindow] = useState('');
+
   // Active Quote object
   const activeQuote = quotes.find((q) => q.id === activeQuoteId) || null;
+
+  const handleOpenTrackingModal = () => {
+    if (!activeQuote) return;
+    setEditStatus(activeQuote.status);
+    setEditCarrier(activeQuote.timeline?.trackingCarrier || '');
+    setEditSlipId(activeQuote.timeline?.containerSlipId || '');
+    setEditOfferPricePerKg(activeQuote.offer?.pricePerKg || (activeQuote.offer?.pricePerTon ? Math.round(activeQuote.offer.pricePerTon / 1000) : 45));
+    setEditDeliveryWindow(activeQuote.offer?.deliveryWindow || '3–5 Business Days');
+    setTrackingModalOpen(true);
+  };
+
+  const handleSaveTrackingUpdate = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!activeQuote) return;
+
+    const nowFormatted = new Intl.DateTimeFormat('en-US', {
+      month: 'short',
+      day: 'numeric',
+      hour: 'numeric',
+      minute: 'numeric',
+      hour12: true,
+    }).format(new Date());
+
+    const updatedTimeline = {
+      ...(activeQuote.timeline || { quoteReceivedAt: activeQuote.requestDate }),
+      trackingCarrier: editCarrier.trim() || undefined,
+      containerSlipId: editSlipId.trim() || undefined,
+    };
+
+    if (editStatus === 'sourcing' && !updatedTimeline.sourcingStartedAt) {
+      updatedTimeline.sourcingStartedAt = nowFormatted;
+    } else if (editStatus === 'offer_ready' && !updatedTimeline.offerConfirmedAt) {
+      updatedTimeline.offerConfirmedAt = nowFormatted;
+    } else if (editStatus === 'confirmed' && !updatedTimeline.offerConfirmedAt) {
+      updatedTimeline.offerConfirmedAt = nowFormatted;
+    } else if (editStatus === 'in_transit' && !updatedTimeline.inTransitAt) {
+      updatedTimeline.inTransitAt = nowFormatted;
+    } else if (editStatus === 'delivered' && !updatedTimeline.deliveredAt) {
+      updatedTimeline.deliveredAt = nowFormatted;
+    }
+
+    const qty = activeQuote.quantityKg || (activeQuote.quantityTons ? activeQuote.quantityTons * 1000 : 500);
+    const updatedOffer = (editStatus !== 'quote_received' && editStatus !== 'sourcing')
+      ? {
+          pricePerKg: editOfferPricePerKg || 45,
+          pricePerTon: (editOfferPricePerKg || 45) * 1000,
+          totalAmount: (editOfferPricePerKg || 45) * qty,
+          deliveryWindow: editDeliveryWindow || '3–5 Business Days (Guaranteed Dispatch)',
+          batchPhoto: activeQuote.offer?.batchPhoto || activeQuote.productImage || 'https://images.unsplash.com/photo-1504917599217-d4dc5ebe6122?auto=format&fit=crop&w=1200&q=80',
+          aiGradeReport: activeQuote.offer?.aiGradeReport || {
+            purityScore: 98.5,
+            spectrographicSummary: 'LiDAR laser scan + digital assay verified.',
+            densityRating: 'High-Density Industrial Bulk Lot',
+            verifiedDate: activeQuote.requestDate,
+          },
+          supplierName: activeQuote.offer?.supplierName || 'Verified Partner Yard',
+          supplierOrigin: activeQuote.offer?.supplierOrigin || activeQuote.deliveryLocation,
+        }
+      : activeQuote.offer;
+
+    if (onUpdateQuoteFull) {
+      onUpdateQuoteFull(activeQuote.id, {
+        status: editStatus,
+        timeline: updatedTimeline,
+        offer: updatedOffer,
+      });
+    } else if (onUpdateQuoteStatus) {
+      onUpdateQuoteStatus(activeQuote.id, editStatus);
+      activeQuote.timeline = updatedTimeline;
+      if (updatedOffer) activeQuote.offer = updatedOffer;
+    }
+
+    setTrackingModalOpen(false);
+  };
 
   // Status Badge Pill Styling (Exact User Spec)
   // Gray = Quote Received, Teal outline = Sourcing, Solid Teal = Offer Ready, Solid Navy = Confirmed/In Transit, Navy with checkmark = Delivered
@@ -176,20 +261,6 @@ export const QuotesPage: React.FC<QuotesPageProps> = ({
       };
       if (!activeQuote.messages) activeQuote.messages = [];
       activeQuote.messages.push(msg);
-
-      // Automated Team Reply simulation
-      setTimeout(() => {
-        if (activeQuote) {
-          if (!activeQuote.messages) activeQuote.messages = [];
-          activeQuote.messages.push({
-            id: `reply-${Date.now()}`,
-            sender: 'team',
-            text: 'Thank you for your question. Our metallurgical verification desk is reviewing the yard assay details and will confirm within 15 minutes.',
-            timestamp: 'Just now',
-          });
-          setNewQuestionText('');
-        }
-      }, 900);
     }
     setNewQuestionText('');
   };
@@ -327,15 +398,6 @@ export const QuotesPage: React.FC<QuotesPageProps> = ({
   const gstEstimated = Math.round(subtotal * 0.18);
   const totalAmount = subtotal + gstEstimated;
 
-  const timelineSteps = [
-    { id: 'quote_received', label: 'Quote Received', icon: Clock, time: activeQuote.requestDate },
-    { id: 'sourcing', label: 'Sourcing', icon: Search, time: 'Sep 13, 10:15 AM' },
-    { id: 'offer_ready', label: 'Offer Ready', icon: FileText, time: 'Sep 13, 01:20 PM' },
-    { id: 'confirmed', label: 'Confirmed', icon: CheckCircle2, time: 'Sep 13, 02:40 PM' },
-    { id: 'in_transit', label: 'In Transit', icon: Truck, time: 'Pending dispatch' },
-    { id: 'delivered', label: 'Delivered', icon: PackageCheck, time: 'Estimated 3 days' },
-  ];
-
   const getStepIndex = (status: BuyerQuoteEnquiry['status']) => {
     switch (status) {
       case 'quote_received': return 0;
@@ -349,6 +411,45 @@ export const QuotesPage: React.FC<QuotesPageProps> = ({
   };
 
   const currentStepIdx = getStepIndex(activeQuote.status);
+
+  const timelineSteps = [
+    { 
+      id: 'quote_received', 
+      label: 'Quote Received', 
+      icon: Clock, 
+      time: activeQuote.timeline?.quoteReceivedAt || activeQuote.requestDate 
+    },
+    { 
+      id: 'sourcing', 
+      label: 'Sourcing', 
+      icon: Search, 
+      time: activeQuote.timeline?.sourcingStartedAt || (currentStepIdx >= 1 ? 'Under Sourcing Review' : 'Pending') 
+    },
+    { 
+      id: 'offer_ready', 
+      label: 'Offer Ready', 
+      icon: FileText, 
+      time: activeQuote.timeline?.offerConfirmedAt || (currentStepIdx >= 2 ? 'Price & Assay Verified' : 'Awaiting Supplier Offer') 
+    },
+    { 
+      id: 'confirmed', 
+      label: 'Confirmed', 
+      icon: CheckCircle2, 
+      time: activeQuote.timeline?.offerConfirmedAt || (currentStepIdx >= 3 ? 'Order Locked' : 'Pending Confirmation') 
+    },
+    { 
+      id: 'in_transit', 
+      label: 'In Transit', 
+      icon: Truck, 
+      time: activeQuote.timeline?.inTransitAt || (currentStepIdx >= 4 ? 'Dispatched' : 'Awaiting Dispatch') 
+    },
+    { 
+      id: 'delivered', 
+      label: 'Delivered', 
+      icon: PackageCheck, 
+      time: activeQuote.timeline?.deliveredAt || (currentStepIdx >= 5 ? 'Verified at Plant Gate' : 'Pending Delivery') 
+    },
+  ];
 
   return (
     <div className="min-h-screen bg-[#F7F8FA] pt-24 sm:pt-28 pb-32 text-slate-900 selection:bg-sky-500/15 selection:text-[#0284c7]">
@@ -375,6 +476,14 @@ export const QuotesPage: React.FC<QuotesPageProps> = ({
 
           {/* Persistent Actions & Live Status Pill */}
           <div className="flex items-center space-x-2.5 shrink-0">
+            <button
+              onClick={handleOpenTrackingModal}
+              className="px-3 py-1.5 rounded-xl bg-sky-50 border border-sky-200 text-[#0284c7] hover:bg-sky-100 transition-all active:scale-95 cursor-pointer shadow-2xs text-xs font-semibold flex items-center space-x-1.5"
+              title="Update status, offer or tracking details"
+            >
+              <Settings className="w-3.5 h-3.5" />
+              <span>Update Status & Tracking</span>
+            </button>
             <button
               onClick={() => setShareModalOpen(true)}
               className="p-2 rounded-xl bg-slate-50 border border-slate-200 text-slate-600 hover:text-black hover:bg-slate-100 transition-all active:scale-95 cursor-pointer shadow-2xs"
@@ -485,18 +594,53 @@ export const QuotesPage: React.FC<QuotesPageProps> = ({
               </span>
             </div>
 
+            {/* Quote Received initial banner if awaiting sourcing */}
+            {activeQuote.status === 'quote_received' && (
+              <div className="bg-gradient-to-r from-slate-50 to-white rounded-2xl p-6 border border-slate-200 flex items-start gap-4 shadow-2xs">
+                <div className="w-10 h-10 rounded-xl bg-slate-800 text-white flex items-center justify-center shrink-0">
+                  <Clock className="w-5 h-5" />
+                </div>
+                <div className="flex-1">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                    <h3 className="text-sm font-bold text-slate-900">
+                      Quote Request Received & Under Metallurgical Desk Review
+                    </h3>
+                    <button
+                      onClick={handleOpenTrackingModal}
+                      className="inline-flex items-center space-x-1.5 text-xs font-semibold text-[#0ea5e9] hover:text-[#0284c7] cursor-pointer"
+                    >
+                      <Edit3 className="w-3.5 h-3.5" />
+                      <span>Update Status</span>
+                    </button>
+                  </div>
+                  <p className="text-xs text-slate-600 mt-1 leading-relaxed">
+                    Your request for {activeQtyKg.toLocaleString('en-IN')} kg of {activeQuote.materialName} has been logged. Our logistics and verification desk is checking accredited supplier yards near {activeQuote.deliveryLocation}.
+                  </p>
+                </div>
+              </div>
+            )}
+
             {/* Sourcing in progress banner if not yet offer ready */}
             {activeQuote.status === 'sourcing' && (
               <div className="bg-gradient-to-r from-sky-50 to-white rounded-2xl p-6 border border-sky-200 flex items-start gap-4 shadow-2xs">
                 <div className="w-10 h-10 rounded-xl bg-[#0ea5e9] text-white flex items-center justify-center shrink-0">
                   <Sparkles className="w-5 h-5 animate-pulse" />
                 </div>
-                <div>
-                  <h3 className="text-sm font-bold text-slate-900">
-                    Sourcing & Supplier Coordination in Progress
-                  </h3>
+                <div className="flex-1">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                    <h3 className="text-sm font-bold text-slate-900">
+                      Sourcing & Supplier Coordination in Progress
+                    </h3>
+                    <button
+                      onClick={handleOpenTrackingModal}
+                      className="inline-flex items-center space-x-1.5 text-xs font-semibold text-[#0ea5e9] hover:text-[#0284c7] cursor-pointer"
+                    >
+                      <Edit3 className="w-3.5 h-3.5" />
+                      <span>Update Status</span>
+                    </button>
+                  </div>
                   <p className="text-xs text-slate-600 mt-1 leading-relaxed">
-                    We are confirming stock availability and calculating road freight logistics to {activeQuote.deliveryLocation}. Your itemized order offer will appear below shortly.
+                    We are confirming stock availability and calculating road freight logistics to {activeQuote.deliveryLocation}. Your itemized order offer will appear below once verified.
                   </p>
                 </div>
               </div>
@@ -607,7 +751,7 @@ export const QuotesPage: React.FC<QuotesPageProps> = ({
               </div>
             )}
 
-            {/* Tracking Status Card (Once Confirmed) */}
+            {/* Tracking Status Card (Real User-Updated Data) */}
             {isStageConfirmedOrHigher && (
               <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-2xs space-y-4">
                 <div className="flex items-center justify-between">
@@ -615,22 +759,32 @@ export const QuotesPage: React.FC<QuotesPageProps> = ({
                     <Truck className="w-5 h-5 text-[#0ea5e9]" />
                     <h3 className="font-bold text-slate-900 text-base">Shipment & Weighbridge Status</h3>
                   </div>
-                  <span className="text-xs font-semibold text-[#0ea5e9] bg-sky-50 px-3 py-1 rounded-full">
-                    GPS Multi-Axle Carrier
-                  </span>
+                  <button
+                    onClick={handleOpenTrackingModal}
+                    className="inline-flex items-center space-x-1 text-xs font-semibold text-[#0ea5e9] hover:underline cursor-pointer"
+                  >
+                    <Edit3 className="w-3.5 h-3.5" />
+                    <span>Update Tracking</span>
+                  </button>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
                   <div className="p-3 bg-slate-50 rounded-xl border border-slate-100">
                     <span className="text-slate-400 block text-[10px] uppercase font-semibold">Carrier</span>
-                    <strong className="text-slate-800 text-xs">VRL Heavy Freightways</strong>
+                    <strong className="text-slate-800 text-xs">
+                      {activeQuote.timeline?.trackingCarrier || 'Awaiting dispatch booking'}
+                    </strong>
                   </div>
                   <div className="p-3 bg-slate-50 rounded-xl border border-slate-100">
                     <span className="text-slate-400 block text-[10px] uppercase font-semibold">Weighbridge Slip</span>
-                    <strong className="text-slate-800 text-xs font-mono">WB-{activeQuote.orderNumber}-01</strong>
+                    <strong className="text-slate-800 text-xs font-mono">
+                      {activeQuote.timeline?.containerSlipId || 'Generated upon gate-in'}
+                    </strong>
                   </div>
                   <div className="p-3 bg-slate-50 rounded-xl border border-slate-100">
-                    <span className="text-slate-400 block text-[10px] uppercase font-semibold">Escrow Status</span>
-                    <strong className="text-emerald-700 text-xs">Funds Secured in Razorpay</strong>
+                    <span className="text-slate-400 block text-[10px] uppercase font-semibold">Order Stage</span>
+                    <strong className="text-emerald-700 text-xs capitalize">
+                      {activeQuote.status.replace('_', ' ')}
+                    </strong>
                   </div>
                 </div>
               </div>
@@ -672,6 +826,10 @@ export const QuotesPage: React.FC<QuotesPageProps> = ({
                   <Check className="w-4 h-4 text-white" />
                   <span>Order Confirmed & Locked</span>
                 </div>
+              ) : activeQuote.status === 'quote_received' ? (
+                <div className="w-full bg-slate-100 text-slate-600 rounded-xl py-3 px-4 text-center font-medium text-xs">
+                  Reviewing Yard Inventory…
+                </div>
               ) : (
                 <div className="w-full bg-slate-100 text-slate-500 rounded-xl py-3 px-4 text-center font-medium text-xs">
                   Sourcing in Progress…
@@ -705,32 +863,31 @@ export const QuotesPage: React.FC<QuotesPageProps> = ({
               <div className="p-4 space-y-3">
                 {/* Messages View */}
                 <div className="space-y-2.5 max-h-56 overflow-y-auto pr-1">
-                  {(activeQuote.messages || [
-                    {
-                      id: 'welcome-msg',
-                      sender: 'team',
-                      text: `Hello! Our logistics desk is tracking quote #${activeQuote.orderNumber}. Ask any questions about truck dispatch or freight.`,
-                      timestamp: 'Today, 10:20 AM',
-                    },
-                  ]).map((msg) => (
-                    <div
-                      key={msg.id}
-                      className={`flex ${msg.sender === 'buyer' ? 'justify-end' : 'justify-start'}`}
-                    >
+                  {(activeQuote.messages && activeQuote.messages.length > 0) ? (
+                    activeQuote.messages.map((msg) => (
                       <div
-                        className={`max-w-[85%] rounded-xl px-3 py-2 text-xs leading-relaxed ${
-                          msg.sender === 'buyer'
-                            ? 'bg-[#0ea5e9] text-white'
-                            : 'bg-slate-100 text-slate-800'
-                        }`}
+                        key={msg.id}
+                        className={`flex ${msg.sender === 'buyer' ? 'justify-end' : 'justify-start'}`}
                       >
-                        <div>{msg.text}</div>
-                        <div className={`text-[9px] mt-1 text-right font-mono ${msg.sender === 'buyer' ? 'text-white/70' : 'text-slate-400'}`}>
-                          {msg.timestamp}
+                        <div
+                          className={`max-w-[85%] rounded-xl px-3 py-2 text-xs leading-relaxed ${
+                            msg.sender === 'buyer'
+                              ? 'bg-[#0ea5e9] text-white'
+                              : 'bg-slate-100 text-slate-800'
+                          }`}
+                        >
+                          <div>{msg.text}</div>
+                          <div className={`text-[9px] mt-1 text-right font-mono ${msg.sender === 'buyer' ? 'text-white/70' : 'text-slate-400'}`}>
+                            {msg.timestamp}
+                          </div>
                         </div>
                       </div>
+                    ))
+                  ) : (
+                    <div className="p-3 bg-slate-50 rounded-xl text-center text-slate-400 text-xs">
+                      No messages yet. Send a direct inquiry to our dispatch team below.
                     </div>
-                  ))}
+                  )}
                 </div>
 
                 {/* Input form */}
@@ -795,6 +952,141 @@ export const QuotesPage: React.FC<QuotesPageProps> = ({
                   </button>
                 </div>
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* Real Status & Tracking Manager Modal */}
+        {trackingModalOpen && (
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <div className="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-7 shadow-2xl border border-slate-200 animate-in fade-in zoom-in-95 duration-200">
+              <div className="flex items-center justify-between pb-4 border-b border-slate-100">
+                <div className="flex items-center space-x-3">
+                  <div className="w-10 h-10 rounded-xl bg-sky-50 text-[#0284c7] flex items-center justify-center">
+                    <Settings className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="text-base font-bold text-slate-900">Manage Quote & Tracking</h3>
+                    <p className="text-xs text-slate-500">Update real-time status, pricing, and carrier dispatch</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setTrackingModalOpen(false)}
+                  className="text-slate-400 hover:text-slate-700 p-1 rounded-full cursor-pointer"
+                >
+                  ✕
+                </button>
+              </div>
+
+              <form onSubmit={handleSaveTrackingUpdate} className="mt-5 space-y-4 text-xs">
+                {/* Status Dropdown */}
+                <div>
+                  <label className="block text-slate-700 font-bold mb-1.5 uppercase text-[10px] tracking-wider">
+                    Quote Workflow Stage
+                  </label>
+                  <select
+                    value={editStatus}
+                    onChange={(e) => setEditStatus(e.target.value as any)}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs font-semibold text-slate-800 outline-none focus:border-[#0ea5e9] cursor-pointer"
+                  >
+                    <option value="quote_received">1. Quote Received (Under Review)</option>
+                    <option value="sourcing">2. Sourcing in Progress (Checking Yard Stock)</option>
+                    <option value="offer_ready">3. Offer Ready (Itemized Pricing Available)</option>
+                    <option value="confirmed">4. Confirmed (Buyer Locked Order)</option>
+                    <option value="in_transit">5. In Transit (Truck / Container Dispatched)</option>
+                    <option value="delivered">6. Delivered (Weighbridge Gate-In Verified)</option>
+                  </select>
+                </div>
+
+                {/* Offer Price if Offer Ready or higher */}
+                {(editStatus !== 'quote_received' && editStatus !== 'sourcing') && (
+                  <div className="p-3.5 bg-slate-50 rounded-2xl border border-slate-200/80 space-y-3">
+                    <div className="font-bold text-slate-800 flex items-center gap-1.5">
+                      <FileText className="w-4 h-4 text-[#0ea5e9]" />
+                      <span>Offer Pricing & Delivery Schedule</span>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-slate-500 font-semibold mb-1">
+                          Offered Price (₹ / kg)
+                        </label>
+                        <input
+                          type="number"
+                          min="1"
+                          step="0.5"
+                          value={editOfferPricePerKg || ''}
+                          onChange={(e) => setEditOfferPricePerKg(parseFloat(e.target.value) || 0)}
+                          placeholder="e.g. 45"
+                          className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800 outline-none focus:border-[#0ea5e9]"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-slate-500 font-semibold mb-1">
+                          Delivery Window
+                        </label>
+                        <input
+                          type="text"
+                          value={editDeliveryWindow}
+                          onChange={(e) => setEditDeliveryWindow(e.target.value)}
+                          placeholder="e.g. 3–5 Business Days"
+                          className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800 outline-none focus:border-[#0ea5e9]"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Tracking Details */}
+                <div className="p-3.5 bg-slate-50 rounded-2xl border border-slate-200/80 space-y-3">
+                  <div className="font-bold text-slate-800 flex items-center gap-1.5">
+                    <Truck className="w-4 h-4 text-[#0ea5e9]" />
+                    <span>Real Logistics & Carrier Dispatch</span>
+                  </div>
+
+                  <div>
+                    <label className="block text-slate-500 font-semibold mb-1">
+                      Carrier / Freight Transporter Name
+                    </label>
+                    <input
+                      type="text"
+                      value={editCarrier}
+                      onChange={(e) => setEditCarrier(e.target.value)}
+                      placeholder="e.g. CONCOR Rail Freight, Spot Fleet Truck #KA-01-AB-1234"
+                      className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800 outline-none focus:border-[#0ea5e9]"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-slate-500 font-semibold mb-1">
+                      Weighbridge Slip / E-Way Bill Number
+                    </label>
+                    <input
+                      type="text"
+                      value={editSlipId}
+                      onChange={(e) => setEditSlipId(e.target.value)}
+                      placeholder="e.g. WB-84920, EWB-1948201"
+                      className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800 outline-none focus:border-[#0ea5e9]"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-end space-x-3 pt-3 border-t border-slate-100">
+                  <button
+                    type="button"
+                    onClick={() => setTrackingModalOpen(false)}
+                    className="px-4 py-2.5 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 font-semibold cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="bg-[#0ea5e9] hover:bg-[#0284c7] text-white px-5 py-2.5 rounded-xl font-semibold transition-all shadow-[0_4px_14px_rgba(14,165,233,0.3)] active:scale-98 cursor-pointer"
+                  >
+                    Save & Apply Changes
+                  </button>
+                </div>
+              </form>
             </div>
           </div>
         )}

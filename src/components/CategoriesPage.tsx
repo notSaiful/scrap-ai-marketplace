@@ -153,10 +153,10 @@ export const CategoriesPage: React.FC<CategoriesPageProps> = ({
           <div>
             <div className="flex items-center gap-2">
               <span className="text-xs font-bold text-[#0ea5e9] uppercase tracking-wider bg-sky-50 px-2.5 py-0.5 rounded-full border border-sky-100">
-                Verified Industrial Supply
+                Direct Yard Sourcing
               </span>
               <span className="text-xs text-slate-400">
-                {displayedItems.length} Available Lots
+                {displayedItems.length} Material Grades
               </span>
             </div>
             <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-[#0f1115] mt-1">
@@ -465,8 +465,8 @@ export const CategoriesPage: React.FC<CategoriesPageProps> = ({
                             <span className="font-semibold text-slate-700">
                               MOQ: {moqKg.toLocaleString('en-IN')} kg
                             </span>
-                            <span className="text-[11px] text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded font-medium">
-                              Stock: {stockKg.toLocaleString('en-IN')} kg
+                            <span className="text-[11px] text-sky-700 bg-sky-50 px-2 py-0.5 rounded font-medium">
+                              Capacity: {stockKg.toLocaleString('en-IN')} kg
                             </span>
                           </div>
                         </div>
