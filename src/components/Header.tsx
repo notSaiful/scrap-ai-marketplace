@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Sparkles, LogOut, ChevronDown, ShieldCheck, Building, FileText, Menu, X } from 'lucide-react';
+import { Sparkles, LogOut, ChevronDown, ShieldCheck, Building, FileText, Menu, X, User, Phone } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 interface HeaderProps {
@@ -8,6 +8,7 @@ interface HeaderProps {
   onOpenAdvisorPage?: () => void;
   onOpenQuotes?: () => void;
   onOpenContactUs?: () => void;
+  onOpenProfile?: () => void;
   currentPage?: 'marketplace' | 'categories' | 'advisor' | 'contact' | 'quotes';
   onOpenAuth: (mode?: 'signin' | 'signup') => void;
   shouldHide?: boolean;
@@ -19,6 +20,7 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenAdvisorPage, 
   onOpenQuotes,
   onOpenContactUs,
+  onOpenProfile,
   currentPage = 'marketplace', 
   onOpenAuth,
   shouldHide = false,
@@ -127,23 +129,42 @@ export const Header: React.FC<HeaderProps> = ({
               {/* Profile Dropdown */}
               {showProfileMenu && (
                 <div className="absolute right-0 mt-2 w-64 bg-white/95 backdrop-blur-2xl rounded-2xl shadow-[0_20px_50px_-10px_rgba(0,0,0,0.15)] border border-black/[0.08] py-2.5 z-50 animate-in fade-in zoom-in-95 duration-150">
-                  <div className="px-4 pb-3 border-b border-black/[0.06]">
+                  <div 
+                    onClick={() => {
+                      if (onOpenProfile) onOpenProfile();
+                      setShowProfileMenu(false);
+                    }}
+                    className="px-4 pb-3 border-b border-black/[0.06] hover:bg-slate-50/80 cursor-pointer transition-colors"
+                  >
                     <div className="text-xs font-bold text-[#0f1115] flex items-center justify-between">
                       <span>{user.name}</span>
                       <span className="text-[10px] bg-gradient-to-r from-sky-50 to-blue-50 text-[#0284c7] font-semibold px-2 py-0.5 rounded-full border border-sky-200">
-                        {user.role === 'buyer' ? 'Verified Buyer' : 'Scrap Yard'}
+                        Verified Trader
                       </span>
                     </div>
                     <div className="text-[11px] text-[#495057] font-medium truncate mt-0.5">
                       {user.email}
                     </div>
-                    <div className="text-[11px] text-[#0f1115] font-medium truncate mt-1 flex items-center gap-1.5">
-                      <Building className="w-3 h-3 text-slate-400" />
-                      <span>{user.companyName}</span>
-                    </div>
+                    {user.phone && (
+                      <div className="text-[11px] text-[#0f1115] font-medium truncate mt-1 flex items-center gap-1.5">
+                        <Phone className="w-3 h-3 text-slate-400" />
+                        <span>{user.phone}</span>
+                      </div>
+                    )}
                   </div>
 
                   <div className="py-1 text-xs font-medium text-[#0f1115]">
+                    <button
+                      onClick={() => {
+                        if (onOpenProfile) onOpenProfile();
+                        setShowProfileMenu(false);
+                      }}
+                      className="w-full px-4 py-2 text-left hover:bg-slate-50 flex items-center space-x-2.5 transition-colors cursor-pointer text-[#0f1115] font-semibold"
+                    >
+                      <User className="w-4 h-4 text-[#0ea5e9]" />
+                      <span>Account Profile</span>
+                    </button>
+
                     {onOpenAdvisorPage && (
                       <button
                         onClick={() => {
@@ -159,21 +180,8 @@ export const Header: React.FC<HeaderProps> = ({
 
                     <button
                       onClick={() => {
-                        alert(`Account verified: Member since ${user.memberSince}. Total trade quota: 5,000 MT.`);
-                        setShowProfileMenu(false);
-                      }}
-                      className="w-full px-4 py-2 text-left hover:bg-slate-50 flex items-center space-x-2.5 transition-colors cursor-pointer"
-                    >
-                      <ShieldCheck className="w-4 h-4 text-emerald-600" />
-                      <span>KYC & Yard Verification</span>
-                    </button>
-
-                    <button
-                      onClick={() => {
                         if (onOpenQuotes) {
                           onOpenQuotes();
-                        } else {
-                          alert('You have 2 active proforma orders pending yard confirmation.');
                         }
                         setShowProfileMenu(false);
                       }}
@@ -295,6 +303,19 @@ export const Header: React.FC<HeaderProps> = ({
           >
             Contact Us
           </button>
+
+          {isAuthenticated && user && (
+            <button 
+              onClick={() => {
+                if (onOpenProfile) onOpenProfile();
+                setMobileMenuOpen(false);
+              }}
+              className="text-left px-3 py-2 text-xs font-semibold rounded-xl transition-colors cursor-pointer bg-slate-50 text-[#0f1115] hover:bg-slate-100 flex items-center space-x-2"
+            >
+              <User className="w-3.5 h-3.5 text-[#0ea5e9]" />
+              <span>Account Profile ({user.name})</span>
+            </button>
+          )}
         </div>
       )}
     </div>

@@ -12,6 +12,7 @@ import { ScrapCard } from './components/ScrapCard';
 import { ProductDetailPage } from './components/ProductDetailPage';
 import { RFQModal } from './components/RFQModal';
 import { AuthModal } from './components/AuthModal';
+import { AccountProfileModal } from './components/AccountProfileModal';
 import { AuthProvider } from './context/AuthContext';
 import { SCRAP_ITEMS } from './data/scrapData';
 import { ScrapItem } from './types/scrap';
@@ -48,6 +49,7 @@ function MarketplaceContent() {
   const [rfqInitialQty, setRfqInitialQty] = useState<number | undefined>(undefined);
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [authModalMode, setAuthModalMode] = useState<'signin' | 'signup'>('signin');
+  const [profileModalOpen, setProfileModalOpen] = useState(false);
   const [sortBy, setSortBy] = useState<'featured' | 'price-asc' | 'price-desc' | 'purity'>('featured');
   const [activeCategory, setActiveCategory] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<'all' | 'recent' | 'trending' | 'featured'>('all');
@@ -288,6 +290,7 @@ function MarketplaceContent() {
         }}
         onOpenQuotes={handleOpenQuotesPage}
         onOpenContactUs={handleOpenContactUs}
+        onOpenProfile={() => setProfileModalOpen(true)}
         onOpenAuth={handleOpenAuth}
         shouldHide={shouldStickSearchBar}
       />
@@ -542,6 +545,14 @@ function MarketplaceContent() {
         isOpen={authModalOpen}
         onClose={() => setAuthModalOpen(false)}
         defaultMode={authModalMode}
+      />
+
+      {/* Account Profile Modal */}
+      <AccountProfileModal
+        isOpen={profileModalOpen}
+        onClose={() => setProfileModalOpen(false)}
+        onOpenOrders={handleOpenQuotesPage}
+        ordersCount={buyerQuotes.length}
       />
 
       {/* RFQ Modal */}

@@ -27,6 +27,7 @@ export interface AuthContextType {
     role?: UserRole;
     country?: string;
   }) => Promise<boolean>;
+  updateProfile: (updates: Partial<User>) => void;
   logout: () => void;
   quickDemoLogin: (role: UserRole) => void;
 }
