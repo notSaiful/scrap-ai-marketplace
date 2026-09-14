@@ -76,8 +76,14 @@ export const WhoItsFor: React.FC<WhoItsForProps> = ({ onOpenRFQ, onExploreCatalo
           {targetSegments.map((seg, idx) => {
             const Icon = seg.icon;
             const isManufacturer = idx === 0;
+            const isTrader = idx === 1;
 
-            if (isManufacturer) {
+            if (isManufacturer || isTrader) {
+              const bgImg = isManufacturer ? '/manufacturing-bg.jpg' : '/traders-bg.jpg';
+              const imgAlt = isManufacturer
+                ? 'Scrap claw crane lifting metal scrap at yard'
+                : 'Scrap yard inventory warehouse with scrap wiring and auto parts';
+
               return (
                 <div
                   key={idx}
@@ -85,8 +91,8 @@ export const WhoItsFor: React.FC<WhoItsForProps> = ({ onOpenRFQ, onExploreCatalo
                 >
                   {/* Background Image with Dark Industrial Gradients */}
                   <img
-                    src="/manufacturing-bg.jpg"
-                    alt="Scrap claw crane lifting metal scrap at yard"
+                    src={bgImg}
+                    alt={imgAlt}
                     className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 pointer-events-none"
                   />
                   {/* Multi-layer Dark Gradient for Readability */}
