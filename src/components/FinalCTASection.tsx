@@ -32,22 +32,15 @@ export const FinalCTASection: React.FC<FinalCTASectionProps> = ({
           Get your first AI-graded quote in under a minute.
         </p>
 
-        {/* Exact User Requested CTA */}
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-3.5 sm:gap-4">
-          <button
-            onClick={onOpenRFQ}
-            className="w-full sm:w-auto bg-[#0ea5e9] hover:bg-[#0284c7] text-white font-semibold text-sm sm:text-base px-8 py-4 rounded-xl transition-all shadow-[0_8px_25px_rgba(14,165,233,0.35)] hover:shadow-[0_12px_30px_rgba(2,132,199,0.45)] flex items-center justify-center space-x-2.5 active:scale-98 cursor-pointer group"
-          >
-            <span>Get Your Quote</span>
-            <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-          </button>
-
+        {/* CTA Buttons */}
+        <div className="flex items-center justify-center">
           {onExploreLots && (
             <button
               onClick={onExploreLots}
-              className="w-full sm:w-auto bg-slate-100 hover:bg-slate-200 text-slate-800 font-semibold text-sm sm:text-base px-7 py-4 rounded-xl transition-all active:scale-98 cursor-pointer"
+              className="w-full sm:w-auto bg-[#0ea5e9] hover:bg-[#0284c7] text-white font-semibold text-sm sm:text-base px-8 py-4 rounded-xl transition-all shadow-[0_8px_25px_rgba(14,165,233,0.35)] hover:shadow-[0_12px_30px_rgba(2,132,199,0.45)] flex items-center justify-center space-x-2.5 active:scale-98 cursor-pointer group"
             >
-              Explore Live Inventory
+              <span>Explore Live Inventory</span>
+              <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
             </button>
           )}
         </div>
