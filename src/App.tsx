@@ -24,6 +24,9 @@ import { MarketlyFooter } from './components/MarketlyFooter';
 import { AIAdvisorPage } from './components/AIAdvisorPage';
 import { ContactUsPage } from './components/ContactUsPage';
 import { QuotesPage, BuyerQuoteEnquiry } from './components/QuotesPage';
+import { LiveScrapTicker } from './components/LiveScrapTicker';
+import { LandedCostSimulator } from './components/LandedCostSimulator';
+import { BentoMasterpiece } from './components/BentoMasterpiece';
 import { evaluateScrapsWithRag } from './services/ragEngine';
 import { ScrapRagResult } from './types/rag';
 
@@ -175,6 +178,12 @@ function MarketplaceContent() {
     setRfqTargetItem(item || null);
     setRfqInitialQty(qty);
     setRfqModalOpen(true);
+  };
+
+  const handleSimulatorRFQ = (payload: { materialName: string; quantityKg: number; targetRate: number; destination: string }) => {
+    const searchWord = payload.materialName.toLowerCase().split(' ')[0];
+    const matched = SCRAP_ITEMS.find(s => s.title.toLowerCase().includes(searchWord) || s.categoryName.toLowerCase().includes(searchWord));
+    handleOpenRFQ(matched || SCRAP_ITEMS[0], payload.quantityKg);
   };
 
   const handleOpenAuth = (mode: 'signin' | 'signup' = 'signin') => {
@@ -460,26 +469,39 @@ function MarketplaceContent() {
               onSearchSubmit={handleSearchSubmit}
             />
 
-            {/* Moving Trust Strip Banner directly below Hero */}
+            {/* Financial-Grade Live Scrap Spot Ticker Bar */}
+            <LiveScrapTicker
+              onSelectCategory={(cat) => handleOpenCategoriesPage(cat)}
+            />
+
+            {/* Moving Trust Strip Banner */}
             <TrustStrip />
 
-            {/* High-Demand Scrap Listings (Above How It Works) */}
-            <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-6">
+            {/* Interactive Landed Cost & Freight Simulator */}
+            <LandedCostSimulator
+              onLockRateAndRequestRFQ={handleSimulatorRFQ}
+            />
+
+            {/* High-Demand Scrap Listings */}
+            <section id="categories" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-6">
               <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8">
                 <div>
-                  <div className="inline-flex items-center space-x-2 text-xs font-semibold text-[#0ea5e9] mb-2 uppercase tracking-wider">
-                    <span className="w-2 h-2 rounded-full bg-gradient-to-r from-[#38bdf8] to-[#0ea5e9] animate-pulse" />
-                    <span>Live Yard Inventory</span>
+                  <div className="inline-flex items-center space-x-2 text-xs font-semibold text-[#0ea5e9] mb-2 uppercase tracking-wider bg-sky-50 border border-sky-100 px-3 py-0.5 rounded-full">
+                    <span className="w-2 h-2 rounded-full bg-[#0ea5e9] animate-ping" />
+                    <span>Verified Yard Inventory</span>
                   </div>
                   <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-[#0f1115] tracking-tight">
-                    High-Demand Listings
+                    High-Demand Scrap Lots
                   </h2>
+                  <p className="text-xs sm:text-sm text-slate-500 mt-1">
+                    Direct-to-mill industrial feedstock in kg with transparent spot pricing and pre-dispatch XRF assay.
+                  </p>
                 </div>
 
                 <div className="shrink-0">
                   <button
                     onClick={() => handleOpenCategoriesPage('all')}
-                    className="group bg-gradient-to-r from-[#38bdf8] via-[#0ea5e9] to-[#0284c7] hover:from-[#0ea5e9] hover:to-[#0369a1] text-white text-xs sm:text-sm font-semibold px-5 py-2.5 rounded-full inline-flex items-center space-x-2 transition-all shadow-[0_4px_14px_rgba(14,165,233,0.3)] hover:shadow-[0_6px_20px_rgba(14,165,233,0.4)] cursor-pointer active:scale-98"
+                    className="group bg-[#0ea5e9] hover:bg-[#0284c7] text-white text-xs sm:text-sm font-semibold px-5 py-2.5 rounded-full inline-flex items-center space-x-2 transition-all shadow-[0_4px_14px_rgba(14,165,233,0.3)] hover:shadow-[0_6px_20px_rgba(14,165,233,0.4)] cursor-pointer active:scale-98"
                   >
                     <span>View All {SCRAP_ITEMS.length} Lots</span>
                     <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
@@ -500,6 +522,12 @@ function MarketplaceContent() {
                 ))}
               </div>
             </section>
+
+            {/* Framer-Style Bento Grid: The Zero-Guesswork Standard */}
+            <BentoMasterpiece
+              onOpenRFQ={() => handleOpenRFQ()}
+              onExploreCatalog={() => handleOpenCategoriesPage('all')}
+            />
 
             {/* How It Works (3 steps) */}
             <HowItWorks onOpenRFQ={() => handleOpenRFQ()} />
