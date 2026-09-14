@@ -4,7 +4,8 @@ export interface User {
   id: string;
   name: string;
   email: string;
-  companyName: string;
+  phone?: string;
+  companyName?: string;
   role: UserRole;
   country: string;
   flag: string;
@@ -18,12 +19,13 @@ export interface AuthContextType {
   isAuthenticated: boolean;
   login: (email: string, password: string, role?: UserRole) => Promise<boolean>;
   signup: (data: {
-    name: string;
     email: string;
-    companyName: string;
-    role: UserRole;
-    country: string;
+    phone: string;
     password: string;
+    name?: string;
+    companyName?: string;
+    role?: UserRole;
+    country?: string;
   }) => Promise<boolean>;
   logout: () => void;
   quickDemoLogin: (role: UserRole) => void;

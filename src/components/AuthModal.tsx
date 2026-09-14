@@ -1,17 +1,12 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { UserRole } from '../types/auth';
 import { 
   X, 
-  Sparkles, 
   Lock, 
   Mail, 
-  Building2, 
-  User, 
-  Globe, 
+  Phone,
   Eye, 
   EyeOff, 
-  CheckCircle2, 
   ArrowRight,
   ShieldCheck
 } from 'lucide-react';
@@ -29,19 +24,16 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 }) => {
   if (!isOpen) return null;
 
-  const { login, signup, quickDemoLogin } = useAuth();
+  const { login, signup } = useAuth();
   const [mode, setMode] = useState<'signin' | 'signup'>(defaultMode);
-  const [role, setRole] = useState<UserRole>('buyer');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
-  // Form Fields
+  // Form Fields: Email, Phone Number, Password only
   const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
-  const [name, setName] = useState('');
-  const [companyName, setCompanyName] = useState('');
-  const [country, setCountry] = useState('India');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -50,24 +42,21 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
     try {
       if (mode === 'signin') {
-        if (!email || !password) {
-          setErrorMessage('Please fill in both email and password.');
+        if (!email.trim() || !password) {
+          setErrorMessage('Please enter your email and password.');
           setIsLoading(false);
           return;
         }
-        await login(email, password, role);
+        await login(email.trim(), password);
       } else {
-        if (!name || !email || !password || !companyName) {
-          setErrorMessage('Please complete all required fields.');
+        if (!email.trim() || !phone.trim() || !password) {
+          setErrorMessage('Please enter your email, phone number, and password.');
           setIsLoading(false);
           return;
         }
         await signup({
-          name,
-          email,
-          companyName,
-          role,
-          country,
+          email: email.trim(),
+          phone: phone.trim(),
           password,
         });
       }
@@ -77,11 +66,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       setIsLoading(false);
       setErrorMessage('Authentication failed. Please check your credentials.');
     }
-  };
-
-  const handleDemo = (demoRole: UserRole) => {
-    quickDemoLogin(demoRole);
-    onClose();
   };
 
   return (
@@ -109,8 +93,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({
           </h2>
           <p className="text-xs text-[#86868b] mt-1 font-normal">
             {mode === 'signin' 
-              ? 'Access your wastemarket.in quotes & scrap orders' 
-              : 'Join the premier B2B secondary metal & scrap exchange'}
+              ? 'Sign in to access your wastemarket.in orders' 
+              : 'Sign up to start trading on wastemarket.in'}
           </p>
         </div>
 
@@ -136,8 +120,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({
           </button>
         </div>
 
-
-
         {/* Error Alert */}
         {errorMessage && (
           <div className="mb-4 bg-rose-50 border border-rose-200 text-rose-800 text-xs font-semibold p-2.5 rounded-xl text-center">
@@ -148,80 +130,10 @@ export const AuthModal: React.FC<AuthModalProps> = ({
         {/* Auth Form */}
         <form onSubmit={handleSubmit} className="space-y-3.5">
           
-          {/* Role Picker (Buyer vs Yard Seller) */}
+          {/* Email Address */}
           <div>
             <label className="block text-xs font-semibold text-[#1d1d1f] mb-1.5">
-              Account Type
-            </label>
-            <div className="grid grid-cols-2 gap-2">
-              <button
-                type="button"
-                onClick={() => setRole('buyer')}
-                className={`py-2 px-3 text-xs font-medium rounded-xl border flex items-center justify-center space-x-1.5 transition-all ${
-                  role === 'buyer'
-                    ? 'border-[#1d1d1f] bg-[#1d1d1f] text-white shadow-xs'
-                    : 'border-black/[0.08] text-[#1d1d1f] bg-[#f5f5f7] hover:bg-[#e8e8ed]'
-                }`}
-              >
-                <span>Scrap Buyer / Smelter</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setRole('seller')}
-                className={`py-2 px-3 text-xs font-medium rounded-xl border flex items-center justify-center space-x-1.5 transition-all ${
-                  role === 'seller'
-                    ? 'border-[#1d1d1f] bg-[#1d1d1f] text-white shadow-xs'
-                    : 'border-black/[0.08] text-[#1d1d1f] bg-[#f5f5f7] hover:bg-[#e8e8ed]'
-                }`}
-              >
-                <span>Scrap Yard / Recycler</span>
-              </button>
-            </div>
-          </div>
-
-          {/* Full Name & Company Name (Sign Up only) */}
-          {mode === 'signup' && (
-            <>
-              <div>
-                <label className="block text-xs font-semibold text-[#1d1d1f] mb-1.5">
-                  Full Name
-                </label>
-                <div className="relative">
-                  <User className="w-4 h-4 text-[#86868b] absolute left-3.5 top-3" />
-                  <input
-                    type="text"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    placeholder="e.g. Vikram Singhania"
-                    className="w-full text-xs font-medium pl-10 pr-3.5 py-2.5 bg-[#f5f5f7] rounded-xl text-[#1d1d1f] placeholder-[#86868b] border border-black/[0.06] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#38bdf8] transition-all"
-                    required
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-[#1d1d1f] mb-1.5">
-                  Company / Yard Name
-                </label>
-                <div className="relative">
-                  <Building2 className="w-4 h-4 text-[#86868b] absolute left-3.5 top-3" />
-                  <input
-                    type="text"
-                    value={companyName}
-                    onChange={(e) => setCompanyName(e.target.value)}
-                    placeholder="e.g. Hindustan Secondary Alloys Corp"
-                    className="w-full text-xs font-medium pl-10 pr-3.5 py-2.5 bg-[#f5f5f7] rounded-xl text-[#1d1d1f] placeholder-[#86868b] border border-black/[0.06] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#38bdf8] transition-all"
-                    required
-                  />
-                </div>
-              </div>
-            </>
-          )}
-
-          {/* Email */}
-          <div>
-            <label className="block text-xs font-semibold text-[#1d1d1f] mb-1.5">
-              Corporate / Yard Email
+              Email Address
             </label>
             <div className="relative">
               <Mail className="w-4 h-4 text-[#86868b] absolute left-3.5 top-3" />
@@ -229,12 +141,32 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="trade@company.com"
+                placeholder="name@example.com"
                 className="w-full text-xs font-medium pl-10 pr-3.5 py-2.5 bg-[#f5f5f7] rounded-xl text-[#1d1d1f] placeholder-[#86868b] border border-black/[0.06] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#38bdf8] transition-all"
                 required
               />
             </div>
           </div>
+
+          {/* Phone Number (Sign Up only) */}
+          {mode === 'signup' && (
+            <div>
+              <label className="block text-xs font-semibold text-[#1d1d1f] mb-1.5">
+                Phone Number
+              </label>
+              <div className="relative">
+                <Phone className="w-4 h-4 text-[#86868b] absolute left-3.5 top-3" />
+                <input
+                  type="tel"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  placeholder="+91 98765 43210"
+                  className="w-full text-xs font-medium pl-10 pr-3.5 py-2.5 bg-[#f5f5f7] rounded-xl text-[#1d1d1f] placeholder-[#86868b] border border-black/[0.06] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#38bdf8] transition-all"
+                  required
+                />
+              </div>
+            </div>
+          )}
 
           {/* Password */}
           <div>
@@ -246,7 +178,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                 <button
                   type="button"
                   onClick={() => alert('Password reset link dispatched to your email.')}
-                  className="text-[11px] font-medium text-[#86868b] hover:text-[#0ea5e9]"
+                  className="text-[11px] font-medium text-[#86868b] hover:text-[#0ea5e9] cursor-pointer"
                 >
                   Forgot password?
                 </button>
@@ -265,48 +197,24 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3.5 top-3 text-[#86868b] hover:text-[#1d1d1f]"
+                className="absolute right-3.5 top-3 text-[#86868b] hover:text-[#1d1d1f] cursor-pointer"
               >
                 {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
             </div>
           </div>
 
-          {/* Country Location (Sign Up only) */}
-          {mode === 'signup' && (
-            <div>
-              <label className="block text-xs font-semibold text-[#1d1d1f] mb-1.5">
-                Country / Region
-              </label>
-              <div className="relative">
-                <Globe className="w-4 h-4 text-[#86868b] absolute left-3.5 top-3" />
-                <select
-                  value={country}
-                  onChange={(e) => setCountry(e.target.value)}
-                  className="w-full text-xs font-medium pl-10 pr-3.5 py-2.5 bg-[#f5f5f7] rounded-xl text-[#1d1d1f] border border-black/[0.06] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#38bdf8] transition-all"
-                >
-                  <option value="India">India (IN)</option>
-                  <option value="United States">United States (US)</option>
-                  <option value="Netherlands">Netherlands (NL)</option>
-                  <option value="United Arab Emirates">UAE (Dubai)</option>
-                  <option value="Germany">Germany (DE)</option>
-                  <option value="Japan">Japan (JP)</option>
-                </select>
-              </div>
-            </div>
-          )}
-
           {/* Submit Button */}
           <button
             type="submit"
             disabled={isLoading}
-            className="apple-btn-primary w-full mt-4 py-3 rounded-full shadow-xs flex items-center justify-center space-x-2 text-xs font-semibold"
+            className="apple-btn-primary w-full mt-4 py-3 rounded-full shadow-xs flex items-center justify-center space-x-2 text-xs font-semibold cursor-pointer"
           >
             {isLoading ? (
               <span>Authenticating...</span>
             ) : (
               <>
-                <span>{mode === 'signin' ? 'Sign In to wastemarket.in' : 'Create Trade Account'}</span>
+                <span>{mode === 'signin' ? 'Sign In' : 'Create Account'}</span>
                 <ArrowRight className="w-4 h-4" />
               </>
             )}
@@ -316,7 +224,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
         {/* Security badge footer */}
         <div className="mt-5 pt-4 border-t border-black/[0.05] flex items-center justify-center space-x-1.5 text-[11px] text-[#86868b] font-normal">
           <ShieldCheck className="w-4 h-4 text-[#0ea5e9] shrink-0" />
-          <span>Encrypted B2B scrap escrow session • 256-bit SSL</span>
+          <span>Encrypted escrow session • 256-bit SSL</span>
         </div>
 
       </div>

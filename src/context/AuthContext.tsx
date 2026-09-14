@@ -70,23 +70,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const signup = async (data: {
-    name: string;
     email: string;
-    companyName: string;
-    role: UserRole;
-    country: string;
+    phone: string;
     password: string;
+    name?: string;
+    companyName?: string;
+    role?: UserRole;
+    country?: string;
   }): Promise<boolean> => {
     await new Promise((res) => setTimeout(res, 400));
     
+    const derivedName = data.name || data.email.split('@')[0].replace(/[._]/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()) || 'Trader User';
+
     const newUser: User = {
       id: `usr-${Date.now()}`,
-      name: data.name,
+      name: derivedName,
       email: data.email,
+      phone: data.phone,
       companyName: data.companyName,
-      role: data.role,
+      role: data.role || 'buyer',
       country: data.country || 'India',
-      flag: data.country.toLowerCase().includes('india') ? '🇮🇳' : '🌐',
+      flag: '🇮🇳',
       isVerified: true,
       memberSince: 'Sep 2026',
     };
