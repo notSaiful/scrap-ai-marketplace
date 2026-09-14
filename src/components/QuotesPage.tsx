@@ -477,14 +477,6 @@ export const QuotesPage: React.FC<QuotesPageProps> = ({
           {/* Persistent Actions & Live Status Pill */}
           <div className="flex items-center space-x-2.5 shrink-0">
             <button
-              onClick={handleOpenTrackingModal}
-              className="px-3 py-1.5 rounded-xl bg-sky-50 border border-sky-200 text-[#0284c7] hover:bg-sky-100 transition-all active:scale-95 cursor-pointer shadow-2xs text-xs font-semibold flex items-center space-x-1.5"
-              title="Update status, offer or tracking details"
-            >
-              <Settings className="w-3.5 h-3.5" />
-              <span>Update Status & Tracking</span>
-            </button>
-            <button
               onClick={() => setShareModalOpen(true)}
               className="p-2 rounded-xl bg-slate-50 border border-slate-200 text-slate-600 hover:text-black hover:bg-slate-100 transition-all active:scale-95 cursor-pointer shadow-2xs"
               title="Share with a colleague"
@@ -601,18 +593,9 @@ export const QuotesPage: React.FC<QuotesPageProps> = ({
                   <Clock className="w-5 h-5" />
                 </div>
                 <div className="flex-1">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                    <h3 className="text-sm font-bold text-slate-900">
-                      Quote Request Received & Under Metallurgical Desk Review
-                    </h3>
-                    <button
-                      onClick={handleOpenTrackingModal}
-                      className="inline-flex items-center space-x-1.5 text-xs font-semibold text-[#0ea5e9] hover:text-[#0284c7] cursor-pointer"
-                    >
-                      <Edit3 className="w-3.5 h-3.5" />
-                      <span>Update Status</span>
-                    </button>
-                  </div>
+                  <h3 className="text-sm font-bold text-slate-900">
+                    Quote Request Received & Under Metallurgical Desk Review
+                  </h3>
                   <p className="text-xs text-slate-600 mt-1 leading-relaxed">
                     Your request for {activeQtyKg.toLocaleString('en-IN')} kg of {activeQuote.materialName} has been logged. Our logistics and verification desk is checking accredited supplier yards near {activeQuote.deliveryLocation}.
                   </p>
@@ -627,18 +610,9 @@ export const QuotesPage: React.FC<QuotesPageProps> = ({
                   <Sparkles className="w-5 h-5 animate-pulse" />
                 </div>
                 <div className="flex-1">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                    <h3 className="text-sm font-bold text-slate-900">
-                      Sourcing & Supplier Coordination in Progress
-                    </h3>
-                    <button
-                      onClick={handleOpenTrackingModal}
-                      className="inline-flex items-center space-x-1.5 text-xs font-semibold text-[#0ea5e9] hover:text-[#0284c7] cursor-pointer"
-                    >
-                      <Edit3 className="w-3.5 h-3.5" />
-                      <span>Update Status</span>
-                    </button>
-                  </div>
+                  <h3 className="text-sm font-bold text-slate-900">
+                    Sourcing & Supplier Coordination in Progress
+                  </h3>
                   <p className="text-xs text-slate-600 mt-1 leading-relaxed">
                     We are confirming stock availability and calculating road freight logistics to {activeQuote.deliveryLocation}. Your itemized order offer will appear below once verified.
                   </p>
@@ -759,13 +733,6 @@ export const QuotesPage: React.FC<QuotesPageProps> = ({
                     <Truck className="w-5 h-5 text-[#0ea5e9]" />
                     <h3 className="font-bold text-slate-900 text-base">Shipment & Weighbridge Status</h3>
                   </div>
-                  <button
-                    onClick={handleOpenTrackingModal}
-                    className="inline-flex items-center space-x-1 text-xs font-semibold text-[#0ea5e9] hover:underline cursor-pointer"
-                  >
-                    <Edit3 className="w-3.5 h-3.5" />
-                    <span>Update Tracking</span>
-                  </button>
                 </div>
 
                 {/* Logistics & Gate Dispatch Tracking Details */}
