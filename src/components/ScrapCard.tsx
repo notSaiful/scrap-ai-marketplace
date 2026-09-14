@@ -109,9 +109,15 @@ export const ScrapCard: React.FC<ScrapCardProps> = ({
           </div>
 
           {/* Row 2: Category & Unit */}
-          <div className="flex items-center justify-between text-xs text-slate-500 font-normal mb-2.5">
+          <div className="flex items-center justify-between text-xs text-slate-500 font-normal mb-2">
             <span className="truncate">{item.categoryName} • {item.origin.split(',')[0]}</span>
             <span className="shrink-0 text-[11px] font-semibold text-slate-700 font-mono">/ kg</span>
+          </div>
+
+          {/* AI Specification Badge */}
+          <div className="flex items-center space-x-1.5 text-[10px] font-medium text-slate-600 bg-sky-50/80 border border-sky-100 rounded-md px-2 py-0.5 w-fit mb-2">
+            <Sparkles className="w-3 h-3 text-[#0ea5e9] shrink-0" />
+            <span className="truncate">{item.aiSpecs.verificationBadge}</span>
           </div>
 
           {/* Optional AI Match Reason Pill */}

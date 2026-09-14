@@ -9,7 +9,8 @@ import {
   ShieldCheck, 
   Camera, 
   MapPin, 
-  Layers
+  Layers,
+  Sparkles
 } from 'lucide-react';
 import { ScrapItem } from '../types/scrap';
 import { ScrapRagResult } from '../types/rag';
@@ -450,6 +451,17 @@ export const CategoriesPage: React.FC<CategoriesPageProps> = ({
                             loading="lazy"
                           />
 
+                          {/* AI Purity Badge Top Left */}
+                          <div className="absolute top-2 left-2 flex items-center space-x-1 bg-white/95 backdrop-blur-md text-[#0f1115] font-bold text-[10px] px-2 py-0.5 rounded-full shadow-2xs border border-black/[0.06]">
+                            <Sparkles className="w-3 h-3 text-[#0ea5e9]" />
+                            <span>{item.aiSpecs.purityScore}% Pure</span>
+                          </div>
+
+                          {/* ISRI Code Top Right */}
+                          <div className="absolute top-2 right-2 bg-black/70 backdrop-blur-md text-white text-[10px] font-mono px-2 py-0.5 rounded">
+                            {item.grade}
+                          </div>
+
                           {/* Origin location badge */}
                           <div className="absolute bottom-2 left-2 bg-black/60 backdrop-blur-md text-white text-[10px] px-2 py-0.5 rounded">
                             {item.origin.split(',')[0]}
@@ -462,6 +474,12 @@ export const CategoriesPage: React.FC<CategoriesPageProps> = ({
                           <h3 className="font-bold text-sm text-[#0f1115] leading-snug line-clamp-1 group-hover:text-[#0ea5e9] transition-colors">
                             {item.title}
                           </h3>
+
+                          {/* AI Specification Pill */}
+                          <div className="flex items-center space-x-1.5 text-[11px] font-medium text-slate-600 bg-sky-50/70 border border-sky-100 rounded-md px-2 py-0.5 w-fit">
+                            <Sparkles className="w-3 h-3 text-[#0ea5e9] shrink-0" />
+                            <span className="truncate max-w-[220px]">{item.aiSpecs.verificationBadge}</span>
+                          </div>
 
                           {/* Indicative Price Range */}
                           <div>
