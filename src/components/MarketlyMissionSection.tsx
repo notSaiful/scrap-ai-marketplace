@@ -53,20 +53,25 @@ export const MarketlyMissionSection: React.FC<MarketlyMissionSectionProps> = ({
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Full-Screen Video Section with Text Overlay */}
-        <div className="relative w-full min-h-[80vh] sm:min-h-[85vh] lg:min-h-[90vh] rounded-3xl text-white p-8 sm:p-14 lg:p-20 shadow-[0_25px_60px_rgba(15,23,42,0.22)] border border-slate-800 overflow-hidden mb-16 flex flex-col justify-center">
+        <div 
+          className="relative w-full min-h-[80vh] sm:min-h-[85vh] lg:min-h-[90vh] rounded-3xl text-white p-8 sm:p-14 lg:p-20 shadow-[0_25px_60px_rgba(15,23,42,0.22)] border border-slate-800 overflow-hidden mb-16 flex flex-col justify-center transform-gpu [backface-visibility:hidden] [contain:paint]"
+          style={{ WebkitBackfaceVisibility: 'hidden', WebkitTransform: 'translate3d(0,0,0)' }}
+        >
           {/* Background Video (Autoplay, Loop, Muted, Playsinline) */}
           <video
             autoPlay
             loop
             muted
             playsInline
-            className="absolute inset-0 w-full h-full object-cover object-center pointer-events-none"
+            preload="auto"
+            className="absolute inset-0 w-full h-full object-cover object-center pointer-events-none transform-gpu [backface-visibility:hidden]"
+            style={{ WebkitBackfaceVisibility: 'hidden', WebkitTransform: 'translate3d(0,0,0)' }}
           >
             <source src="/why-we-started.mp4" type="video/mp4" />
           </video>
 
           {/* Cinematic Overlay for High Contrast and Legibility */}
-          <div className="absolute inset-0 bg-gradient-to-r from-slate-950/95 via-slate-950/80 to-slate-950/40 pointer-events-none" />
+          <div className="absolute inset-0 bg-gradient-to-r from-slate-950/95 via-slate-950/80 to-slate-950/40 pointer-events-none [backface-visibility:hidden]" />
           <div className="absolute inset-0 bg-black/30 pointer-events-none" />
 
           {/* Text Overlay Content */}
