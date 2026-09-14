@@ -136,29 +136,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
           </button>
         </div>
 
-        {/* Fast 1-Click Demo Login Bar */}
-        <div className="mb-5 bg-[#f5f5f7] border border-black/[0.04] rounded-2xl p-3 text-center">
-          <div className="text-[11px] font-semibold text-[#1d1d1f] uppercase tracking-wider mb-2 flex items-center justify-center gap-1">
-            <Sparkles className="w-3 h-3 text-[#0ea5e9]" />
-            <span>Instant Demo Access</span>
-          </div>
-          <div className="grid grid-cols-2 gap-2">
-            <button
-              type="button"
-              onClick={() => handleDemo('buyer')}
-              className="px-3 py-1.5 bg-white hover:bg-neutral-50 border border-black/[0.06] rounded-full text-xs font-semibold text-[#1d1d1f] shadow-2xs hover:border-black/[0.15] transition-all flex items-center justify-center gap-1 active:scale-[0.98]"
-            >
-              <span>🇮🇳 As Scrap Buyer</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => handleDemo('seller')}
-              className="px-3 py-1.5 bg-white hover:bg-neutral-50 border border-black/[0.06] rounded-full text-xs font-semibold text-[#1d1d1f] shadow-2xs hover:border-black/[0.15] transition-all flex items-center justify-center gap-1 active:scale-[0.98]"
-            >
-              <span>🇳🇱 As Yard Manager</span>
-            </button>
-          </div>
-        </div>
+
 
         {/* Error Alert */}
         {errorMessage && (
