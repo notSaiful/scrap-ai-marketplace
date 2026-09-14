@@ -106,8 +106,8 @@ export const MarketlyMissionSection: React.FC<MarketlyMissionSectionProps> = ({
 
         {/* Section 2: Why Businesses Trust wastemarket */}
         <div>
-          {/* Subheader */}
-          <div className="text-center max-w-3xl mx-auto mb-12">
+          {/* Subheader without subtitle */}
+          <div className="text-center max-w-3xl mx-auto mb-10">
             <div className="inline-flex items-center space-x-1.5 bg-sky-50 border border-sky-200 text-[#0284c7] px-3.5 py-1 rounded-full text-xs font-semibold mb-3">
               <ShieldCheck className="w-3.5 h-3.5 text-[#0ea5e9]" />
               <span>Institutional Accountability</span>
@@ -115,64 +115,29 @@ export const MarketlyMissionSection: React.FC<MarketlyMissionSectionProps> = ({
             <h3 className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight text-[#0f1115]">
               Why Businesses Trust wastemarket
             </h3>
-            <p className="text-sm sm:text-base text-[#495057] mt-3 max-w-xl mx-auto">
-              Every ton sourced on WasteMarket is engineered for zero risk, transparent pricing, and predictable industrial delivery.
-            </p>
           </div>
 
-          {/* 4 Trust Value Props Cards Grid */}
+          {/* 4 Trust Value Props Cards Grid - Clean minimal cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {trustPillars.map((pillar, idx) => {
-              const Icon = pillar.icon;
-              return (
-                <div
-                  key={idx}
-                  className="group relative bg-white rounded-2xl p-7 border border-black/[0.08] shadow-[0_4px_20px_rgba(0,0,0,0.03)] hover:shadow-[0_12px_32px_rgba(14,165,233,0.12)] hover:border-sky-300/80 transition-all duration-300 flex flex-col justify-between"
-                >
-                  <div>
-                    {/* Top Row: Icon with Gradient & Tag */}
-                    <div className="flex items-center justify-between mb-6">
-                      <div className={`w-12 h-12 rounded-xl bg-gradient-to-tr ${pillar.accentColor} text-white flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform`}>
-                        <Icon className="w-6 h-6 text-white" />
-                      </div>
-                      <span className="text-[11px] font-semibold text-slate-500 bg-slate-100 px-2.5 py-1 rounded-full border border-slate-200/60">
-                        {pillar.tag}
-                      </span>
-                    </div>
-
-                    {/* Pillar Title */}
-                    <h4 className="text-lg font-bold text-[#0f1115] tracking-tight mb-2 group-hover:text-[#0284c7] transition-colors">
-                      {pillar.title}
-                    </h4>
-
-                    {/* Pillar Description */}
-                    <p className="text-xs sm:text-sm text-[#495057] leading-relaxed font-normal">
-                      {pillar.description}
-                    </p>
-                  </div>
-
-                  {/* Card Footer Line */}
-                  <div className="mt-6 pt-4 border-t border-slate-100 flex items-center justify-between text-xs font-semibold text-[#0ea5e9]">
-                    <span>Verified Guarantee</span>
-                    <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-
-          {/* Optional Action Prompt Banner */}
-          {(onOpenRFQ || onExploreLots) && (
-            <div className="mt-12 text-center">
-              <button
-                onClick={onOpenRFQ || onExploreLots}
-                className="inline-flex items-center space-x-2 bg-gradient-to-r from-[#38bdf8] via-[#0ea5e9] to-[#0284c7] hover:from-[#0ea5e9] hover:to-[#0369a1] text-white text-sm font-semibold px-6 py-3 rounded-full shadow-[0_4px_16px_rgba(14,165,233,0.3)] hover:shadow-[0_8px_24px_rgba(14,165,233,0.4)] transition-all cursor-pointer active:scale-98"
+            {trustPillars.map((pillar, idx) => (
+              <div
+                key={idx}
+                className="group relative bg-white rounded-2xl p-7 border border-black/[0.08] shadow-[0_4px_20px_rgba(0,0,0,0.03)] hover:shadow-[0_12px_32px_rgba(14,165,233,0.12)] hover:border-sky-300/80 transition-all duration-300 flex flex-col justify-between"
               >
-                <span>Request a Guaranteed RFQ Quote</span>
-                <ArrowRight className="w-4 h-4" />
-              </button>
-            </div>
-          )}
+                <div>
+                  {/* Pillar Title */}
+                  <h4 className="text-lg font-bold text-[#0f1115] tracking-tight mb-3 group-hover:text-[#0284c7] transition-colors">
+                    {pillar.title}
+                  </h4>
+
+                  {/* Pillar Description */}
+                  <p className="text-xs sm:text-sm text-[#495057] leading-relaxed font-normal">
+                    {pillar.description}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </section>
