@@ -83,12 +83,6 @@ export const HowItWorks: React.FC<HowItWorksProps> = ({ onOpenRFQ }) => {
                 <p className="text-sm sm:text-base text-slate-300 font-normal leading-relaxed max-w-xs">
                   {step.description}
                 </p>
-
-                {/* Protocol Accent Tag */}
-                <div className="pt-2 flex items-center space-x-2 text-xs text-sky-300/80 font-medium">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                  <span>{step.highlight}</span>
-                </div>
               </div>
             );
           })}
