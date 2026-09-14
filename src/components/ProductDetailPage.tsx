@@ -236,7 +236,7 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
 
               {/* Delivery Guarantee Line */}
               <div className="pt-4 border-t border-slate-100 flex items-start gap-2.5 text-xs text-slate-600">
-                <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                <ShieldCheck className="w-4 h-4 text-[#0ea5e9] shrink-0 mt-0.5" />
                 <span>
                   <strong>Escrow Trade Assurance:</strong> Payments released only after physical weight and material verification at destination.
                 </span>

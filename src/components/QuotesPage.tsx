@@ -217,22 +217,22 @@ export const QuotesPage: React.FC<QuotesPageProps> = ({
         );
       case 'confirmed':
         return (
-          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-emerald-600 text-white shadow-2xs">
+          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-[#0284c7] text-white shadow-2xs">
             <Check className="w-3.5 h-3.5 mr-1 text-white" />
             Confirmed
           </span>
         );
       case 'in_transit':
         return (
-          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-[#0284c7] text-white shadow-2xs">
+          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-[#0369a1] text-white shadow-2xs">
             <Truck className="w-3.5 h-3.5 mr-1 text-white" />
             In Transit
           </span>
         );
       case 'delivered':
         return (
-          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-[#0f1115] text-emerald-400 border border-emerald-500/30">
-            <Check className="w-3.5 h-3.5 mr-1 text-emerald-400" />
+          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-[#0f1115] text-[#38bdf8] border border-[#38bdf8]/30">
+            <Check className="w-3.5 h-3.5 mr-1 text-[#38bdf8]" />
             Delivered
           </span>
         );
@@ -658,7 +658,7 @@ export const QuotesPage: React.FC<QuotesPageProps> = ({
                       Itemized proforma breakdown for Order #{activeQuote.orderNumber}
                     </p>
                   </div>
-                  <span className="text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-3 py-1 rounded-full">
+                  <span className="text-xs font-bold text-[#0284c7] bg-sky-50 border border-sky-200 px-3 py-1 rounded-full">
                     Supplier Allocated
                   </span>
                 </div>
@@ -767,11 +767,13 @@ export const QuotesPage: React.FC<QuotesPageProps> = ({
                     <span>Update Tracking</span>
                   </button>
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+
+                {/* Logistics & Gate Dispatch Tracking Details */}
+                <div className="p-5 border-t border-slate-100 grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div className="p-3 bg-slate-50 rounded-xl border border-slate-100">
-                    <span className="text-slate-400 block text-[10px] uppercase font-semibold">Carrier</span>
+                    <span className="text-slate-400 block text-[10px] uppercase font-semibold">Carrier / Fleet</span>
                     <strong className="text-slate-800 text-xs">
-                      {activeQuote.timeline?.trackingCarrier || 'Awaiting dispatch booking'}
+                      {activeQuote.timeline?.trackingCarrier || 'Assigned upon confirmation'}
                     </strong>
                   </div>
                   <div className="p-3 bg-slate-50 rounded-xl border border-slate-100">
@@ -782,7 +784,7 @@ export const QuotesPage: React.FC<QuotesPageProps> = ({
                   </div>
                   <div className="p-3 bg-slate-50 rounded-xl border border-slate-100">
                     <span className="text-slate-400 block text-[10px] uppercase font-semibold">Order Stage</span>
-                    <strong className="text-emerald-700 text-xs capitalize">
+                    <strong className="text-[#0284c7] text-xs capitalize">
                       {activeQuote.status.replace('_', ' ')}
                     </strong>
                   </div>
@@ -793,23 +795,22 @@ export const QuotesPage: React.FC<QuotesPageProps> = ({
           </div>
 
           {/* ===================================================================== */}
-          {/* RIGHT: STICKY DESKTOP PANEL                                           */}
-          {/* Guarantee Badge + Confirm Order Button + Ask a Question Thread        */}
+          {/* RIGHT COLUMN: ACTION BOX (ACCEPT & ESCROW / REVISE) & LIVE CHAT       */}
           {/* ===================================================================== */}
-          <div className="lg:col-span-4 lg:sticky lg:top-24 space-y-5">
-            
-            {/* Action Card */}
+          <div className="space-y-6">
+
+            {/* Action Box */}
             <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-2xs space-y-5">
               <div>
                 <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">
-                  Total Payable
+                  Total Landed Payable
                 </span>
-                <div className="text-2xl sm:text-3xl font-bold text-[#0f1115] mt-0.5">
+                <div className="text-3xl font-extrabold text-[#0f1115] mt-1">
                   ₹{totalAmount.toLocaleString('en-IN')}
                 </div>
-                <span className="text-xs text-slate-500 block mt-0.5">
-                  For {activeQtyKg.toLocaleString('en-IN')} kg {activeQuote.materialName}
-                </span>
+                <div className="text-xs text-slate-500 mt-1">
+                  Includes 18% GST (₹{gstEstimated.toLocaleString('en-IN')}) & direct yard freight.
+                </div>
               </div>
 
               {/* Confirm Order CTA */}
@@ -822,7 +823,7 @@ export const QuotesPage: React.FC<QuotesPageProps> = ({
                   <ArrowRight className="w-4 h-4" />
                 </button>
               ) : isStageConfirmedOrHigher ? (
-                <div className="w-full bg-emerald-600 text-white rounded-xl py-3.5 px-4 text-center font-bold text-xs flex items-center justify-center gap-2 shadow-[0_4px_14px_rgba(5,150,105,0.3)]">
+                <div className="w-full bg-[#0284c7] text-white rounded-xl py-3.5 px-4 text-center font-bold text-xs flex items-center justify-center gap-2 shadow-[0_4px_14px_rgba(2,132,199,0.3)]">
                   <Check className="w-4 h-4 text-white" />
                   <span>Order Confirmed & Locked</span>
                 </div>
@@ -838,7 +839,7 @@ export const QuotesPage: React.FC<QuotesPageProps> = ({
 
               {/* Escrow Guarantee Badge */}
               <div className="pt-4 border-t border-slate-100 flex items-start gap-2.5 text-xs text-slate-600">
-                <ShieldCheck className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
+                <ShieldCheck className="w-5 h-5 text-[#0ea5e9] shrink-0 mt-0.5" />
                 <div>
                   <span className="font-bold text-slate-900 block">100% Escrow Guarantee</span>
                   <p className="text-[11px] text-slate-500 mt-0.5 leading-relaxed">

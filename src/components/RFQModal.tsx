@@ -75,12 +75,12 @@ export const RFQModal: React.FC<RFQModalProps> = ({
 
         {submitted ? (
           <div className="py-12 text-center space-y-3">
-            <div className="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto">
+            <div className="w-16 h-16 bg-sky-100 text-[#0284c7] rounded-full flex items-center justify-center mx-auto shadow-2xs">
               <CheckCircle2 className="w-10 h-10" />
             </div>
-            <h4 className="text-lg font-bold text-slate-900">Quotation Request Submitted!</h4>
+            <h4 className="text-lg font-bold text-slate-900">Order Request Submitted!</h4>
             <p className="text-xs text-slate-500 max-w-sm mx-auto">
-              AI Match Engine has dispatched your inquiry to the yard manager. You will receive an official proforma invoice and assay certificate shortly.
+              AI Match Engine has dispatched your order inquiry to the yard manager. You will receive an official proforma invoice and assay certificate shortly.
             </p>
           </div>
         ) : (
@@ -92,7 +92,7 @@ export const RFQModal: React.FC<RFQModalProps> = ({
                   <span className="font-bold text-black">{user.name}</span>
                   <span className="text-slate-500">({user.companyName})</span>
                 </div>
-                <span className="text-[10px] bg-emerald-50 text-emerald-800 font-bold px-1.5 py-0.2 rounded border border-emerald-200">
+                <span className="text-[10px] bg-sky-50 text-[#0284c7] font-bold px-1.5 py-0.2 rounded border border-sky-200">
                   Verified {user.role === 'buyer' ? 'Buyer' : 'Yard'}
                 </span>
               </div>
@@ -188,7 +188,7 @@ export const RFQModal: React.FC<RFQModalProps> = ({
             </div>
 
             <div className="bg-[#f5f5f7] p-3.5 rounded-2xl text-[11px] text-[#86868b] flex items-center space-x-2 border border-black/[0.04]">
-              <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
+              <ShieldCheck className="w-4 h-4 text-[#0ea5e9] shrink-0" />
               <span>Free Trade Escrow protection included with all verified suppliers.</span>
             </div>
 
