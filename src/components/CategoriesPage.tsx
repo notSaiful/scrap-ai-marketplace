@@ -81,8 +81,9 @@ export const CategoriesPage: React.FC<CategoriesPageProps> = ({
   ];
 
   // Client-side multi-factor filtering based on Alibaba filters
+  // Constrained to 1 listing per category section
   const displayedItems = useMemo(() => {
-    return filteredScraps.filter(item => {
+    const rawFiltered = filteredScraps.filter(item => {
       // 1. Search within category
       if (categorySearch.trim()) {
         const query = categorySearch.toLowerCase().trim();
@@ -116,6 +117,19 @@ export const CategoriesPage: React.FC<CategoriesPageProps> = ({
 
       return true;
     });
+
+    // Leave exactly 1 listing per category section
+    const seenCategories = new Set<string>();
+    const onePerCategory: ScrapItem[] = [];
+
+    for (const item of rawFiltered) {
+      if (!seenCategories.has(item.category)) {
+        seenCategories.add(item.category);
+        onePerCategory.push(item);
+      }
+    }
+
+    return onePerCategory;
   }, [filteredScraps, categorySearch, maxPrice, selectedLocation, selectedQuantityRange]);
 
   return (
@@ -242,9 +256,9 @@ export const CategoriesPage: React.FC<CategoriesPageProps> = ({
                     }`}
                   >
                     <span>All Materials</span>
-                    <span className="text-[10px] text-slate-400">Total</span>
+                    <span className="text-[10px] text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded">4 Lots</span>
                   </button>
-                  {CATEGORIES.map(cat => (
+                  {CATEGORIES.filter(c => c.id !== 'all').map(cat => (
                     <button
                       key={cat.id}
                       onClick={() => setActiveCategory(cat.id)}
@@ -256,7 +270,7 @@ export const CategoriesPage: React.FC<CategoriesPageProps> = ({
                     >
                       <span className="truncate">{cat.name}</span>
                       <span className="text-[10px] text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded">
-                        {cat.count}
+                        1 Lot
                       </span>
                     </button>
                   ))}
