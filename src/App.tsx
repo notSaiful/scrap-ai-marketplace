@@ -452,44 +452,10 @@ function MarketplaceContent() {
             {/* Moving Trust Strip Banner */}
             <TrustStrip />
 
-            {/* Direct Sourcing & Custom RFQ Banner */}
-            <section id="categories" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-6">
-              <div className="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 rounded-3xl p-6 sm:p-10 border border-slate-700/50 shadow-xl text-white relative overflow-hidden">
-                <div className="absolute top-0 right-0 -mr-16 -mt-16 w-80 h-80 rounded-full bg-[#0ea5e9]/10 blur-3xl pointer-events-none" />
-                <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-                  <div className="max-w-2xl">
-                    <div className="inline-flex items-center space-x-2 text-xs font-semibold text-[#38bdf8] mb-3 uppercase tracking-wider bg-sky-950/80 border border-sky-800/60 px-3.5 py-1 rounded-full">
-                      <span className="w-2 h-2 rounded-full bg-[#38bdf8] animate-ping" />
-                      <span>On-Demand Industrial Sourcing</span>
-                    </div>
-                    <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-white">
-                      Source Any Scrap Lot Directly From Accredited Yards
-                    </h2>
-                    <p className="text-xs sm:text-sm text-slate-300 mt-2 leading-relaxed">
-                      No fake stock. Submit your exact scrap specifications, required tonnage, and destination plant gate. We verify availability with certified yards, coordinate digital assay, and deliver transparent landed proforma quotes.
-                    </p>
-                  </div>
-                  <div className="shrink-0 flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full md:w-auto">
-                    <button
-                      onClick={() => handleOpenRFQ()}
-                      className="bg-[#0ea5e9] hover:bg-[#0284c7] text-white text-xs sm:text-sm font-semibold px-6 py-3 rounded-xl inline-flex items-center justify-center space-x-2 transition-all shadow-[0_4px_14px_rgba(14,165,233,0.4)] cursor-pointer active:scale-98"
-                    >
-                      <span>Request Custom Quote</span>
-                      <ArrowRight className="w-4 h-4" />
-                    </button>
-                    <button
-                      onClick={() => handleOpenCategoriesPage('all')}
-                      className="bg-white/10 hover:bg-white/20 border border-white/20 text-white text-xs sm:text-sm font-semibold px-5 py-3 rounded-xl inline-flex items-center justify-center transition-all cursor-pointer"
-                    >
-                      Browse Material Categories
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </section>
-
             {/* How It Works (3 steps) */}
-            <HowItWorks onOpenRFQ={() => handleOpenRFQ()} />
+            <div id="categories">
+              <HowItWorks onOpenRFQ={() => handleOpenRFQ()} />
+            </div>
 
             {/* Who It's For: Built for Businesses That Buy in Bulk */}
             <WhoItsFor
