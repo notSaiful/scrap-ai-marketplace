@@ -335,6 +335,26 @@ export function evaluateScrapsWithRag(
 ): RagRecommendationBrief | null {
   if (!query.trim()) return null;
 
+  const qLower = query.toLowerCase().trim();
+
+  // If query is a greeting or conversational inquiry (e.g. "hi", "hello", "hey", "who are you"),
+  // return null so it doesn't display a bogus "Metallurgical & Sourcing Analysis: 'hi'" banner over the catalog!
+  const greetings = [
+    'hi', 'hello', 'hey', 'heyy', 'hiya', 'howdy', 'hola', 'namaste', 'yo', 'sup',
+    'good morning', 'good afternoon', 'good evening', 'help', 'test', 'who are you', 'what is this'
+  ];
+  if (greetings.includes(qLower) || /^(hi|hello|hey|howdy|namaste)\b/i.test(qLower)) {
+    const commodities = [
+      'copper', 'steel', 'iron', 'hms', 'aluminum', 'lead', 'battery',
+      'plastic', 'pet', 'paper', 'zinc', 'brass', 'scrap', 'price',
+      'rfq', 'order', 'occ', 'flake', 'wire'
+    ];
+    const hasCommodity = commodities.some(c => qLower.includes(c));
+    if (!hasCommodity) {
+      return null;
+    }
+  }
+
   const intent = extractQueryIntent(query);
 
   // Score all items
@@ -344,7 +364,6 @@ export function evaluateScrapsWithRag(
   scoredItems.sort((a, b) => b.compositeScore - a.compositeScore);
 
   // Check for specialized market research questions
-  const qLower = query.toLowerCase().trim();
   const isWhyMetalsQuery = (qLower.includes('why') && (qLower.includes('metal') || qLower.includes('demand'))) ||
     (qLower.includes('high demand') && qLower.includes('metal')) ||
     qLower.includes('why are metals are in high demand') ||

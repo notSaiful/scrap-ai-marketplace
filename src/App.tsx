@@ -26,6 +26,7 @@ import { ContactUsPage } from './components/ContactUsPage';
 import { QuotesPage, BuyerQuoteEnquiry } from './components/QuotesPage';
 import { LiveScrapTicker } from './components/LiveScrapTicker';
 import { evaluateScrapsWithRag } from './services/ragEngine';
+import { isConversationalQuery } from './services/openRouterService';
 import { ScrapRagResult } from './types/rag';
 
 const INITIAL_BUYER_QUOTES: BuyerQuoteEnquiry[] = [];
@@ -122,7 +123,7 @@ function MarketplaceContent() {
       }
 
       // Keyword fallback if RAG isn't active
-      if (!ragBrief && searchQuery.trim()) {
+      if (!ragBrief && searchQuery.trim() && !isConversationalQuery(searchQuery)) {
         const q = searchQuery.toLowerCase().trim();
         const priceMatch = q.match(/(?:under|below|<|\$)\s*(\d+[\d,]*)/i);
         if (priceMatch) {
