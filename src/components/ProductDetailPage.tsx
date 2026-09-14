@@ -37,13 +37,6 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
   ];
   const [selectedImage, setSelectedImage] = useState<string>(item.primaryImage);
 
-  // Quantity Stepper
-  const [quantity, setQuantity] = useState<number>(item.moq || 20);
-
-  // Active Tab: Overview | Specifications | Sourcing
-  const [activeTab, setActiveTab] = useState<'overview' | 'specs' | 'sourcing'>('overview');
-  const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(null);
-
   // Derive material display name and base pricing
   const materialName = item.title.includes('Steel')
     ? 'Steel Scrap'
@@ -57,20 +50,32 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
     ? 'Paper & Cardboard'
     : item.categoryName;
 
-  const baseRate = item.pricePerTon > 1000 ? Math.round(item.pricePerTon * 83) : Math.round(item.pricePerTon * 85);
-  const minPrice = Math.round(baseRate * 0.95);
-  const maxPrice = Math.round(baseRate * 1.05);
+  // Derive realistic scrap rate per kg in INR
+  const baseRatePerTon = item.pricePerTon > 1000 ? Math.round(item.pricePerTon * 83) : Math.round(item.pricePerTon * 85);
+  const baseRate = Math.round(baseRatePerTon / 1000);
+  const minPrice = Math.max(1, Math.round(baseRate * 0.95));
+  const maxPrice = Math.max(1, Math.round(baseRate * 1.05));
+
+  // Default MOQ in kg (standard scrap batch size)
+  const moqKg = item.moq >= 10 ? item.moq * 50 : 500;
+
+  // Quantity Stepper (in kg)
+  const [quantity, setQuantity] = useState<number>(moqKg);
+
+  // Active Tab: Overview | Specifications | Sourcing
+  const [activeTab, setActiveTab] = useState<'overview' | 'specs' | 'sourcing'>('overview');
+  const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(null);
 
   const relatedMaterials = SCRAP_ITEMS.filter((s) => s.id !== item.id).slice(0, 3);
 
   const faqs = [
     {
       q: `What is the delivery timeline for ${materialName}?`,
-      a: `Standard containerized dispatch is typically scheduled within 3–5 business days from order confirmation and escrow fund lock.`,
+      a: `Standard dispatch is typically scheduled within 3–5 business days from order confirmation and escrow fund lock.`,
     },
     {
       q: 'Can I request a custom quantity below the minimum order quantity?',
-      a: 'Standard orders start at indicated container capacity (typically 20 MT). For smaller test trial batches, submit a quote request specifying your trial volume.',
+      a: `Standard orders start at indicated batch capacity (typically ${moqKg.toLocaleString('en-IN')} kg). For smaller trial batches, submit a quote request specifying your trial volume.`,
     },
     {
       q: 'How does the Escrow Delivery Guarantee protect my purchase?',
@@ -177,7 +182,7 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
                 </div>
                 <div className="text-2xl sm:text-3xl font-bold text-[#0f1115] mt-0.5">
                   ₹{minPrice.toLocaleString('en-IN')} – ₹{maxPrice.toLocaleString('en-IN')}
-                  <span className="text-sm font-normal text-slate-500"> / metric ton</span>
+                  <span className="text-sm font-normal text-slate-500"> / kg</span>
                 </div>
                 <div className="text-[11px] text-slate-400 mt-1">
                   Final landed price confirmed based on destination weighbridge location.
@@ -187,26 +192,26 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
               {/* Quantity Stepper Input */}
               <div className="space-y-2">
                 <div className="flex items-center justify-between text-xs font-semibold text-slate-700">
-                  <span>Order Quantity (Metric Tons)</span>
-                  <span className="text-slate-400 font-normal">MOQ: {item.moq} MT</span>
+                  <span>Order Quantity (kg)</span>
+                  <span className="text-slate-400 font-normal">MOQ: {moqKg.toLocaleString('en-IN')} kg</span>
                 </div>
 
                 <div className="flex items-center space-x-3">
                   <div className="flex items-center border border-slate-200 rounded-xl bg-slate-50 overflow-hidden">
                     <button
                       type="button"
-                      onClick={() => setQuantity(Math.max(item.moq || 5, quantity - 5))}
+                      onClick={() => setQuantity(Math.max(moqKg, quantity - 100))}
                       className="p-3 text-slate-600 hover:text-black hover:bg-slate-200/60 transition-colors cursor-pointer"
                       title="Decrease quantity"
                     >
                       <Minus className="w-4 h-4" />
                     </button>
-                    <span className="px-5 text-sm font-bold text-slate-900 min-w-[70px] text-center">
-                      {quantity} MT
+                    <span className="px-5 text-sm font-bold text-slate-900 min-w-[90px] text-center">
+                      {quantity.toLocaleString('en-IN')} kg
                     </span>
                     <button
                       type="button"
-                      onClick={() => setQuantity(quantity + 5)}
+                      onClick={() => setQuantity(quantity + 100)}
                       className="p-3 text-slate-600 hover:text-black hover:bg-slate-200/60 transition-colors cursor-pointer"
                       title="Increase quantity"
                     >
@@ -225,7 +230,7 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
                 onClick={() => onOpenRFQ(item, quantity)}
                 className="w-full bg-[#0ea5e9] hover:bg-[#0284c7] text-white font-semibold text-sm sm:text-base py-3.5 px-6 rounded-xl transition-all shadow-[0_8px_20px_rgba(14,165,233,0.3)] active:scale-98 cursor-pointer flex items-center justify-center gap-2 group"
               >
-                <span>Request Quote ({quantity} MT)</span>
+                <span>Request Quote ({quantity.toLocaleString('en-IN')} kg)</span>
                 <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
               </button>
 
@@ -318,7 +323,7 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
                       { key: 'Sourcing Region', val: item.origin },
                       { key: 'Moisture Limit', val: '< 0.5% max permissible' },
                       { key: 'Physical Form', val: 'Sheared lengths / hydraulic baled lots' },
-                      { key: 'Minimum Order Quantity', val: `${item.moq} Metric Tons` },
+                      { key: 'Minimum Order Quantity', val: `${moqKg.toLocaleString('en-IN')} kg` },
                     ].map((row, i) => (
                       <tr key={i} className={i % 2 === 0 ? 'bg-slate-50/70' : 'bg-white'}>
                         <td className="py-3 px-4 sm:px-6 font-semibold text-slate-700 w-1/3 border-r border-slate-200">

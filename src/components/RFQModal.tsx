@@ -21,9 +21,13 @@ export const RFQModal: React.FC<RFQModalProps> = ({
   if (!isOpen) return null;
 
   const { user, isAuthenticated } = useAuth();
-  const [quantity, setQuantity] = useState(initialQuantity || (item ? item.moq : 50));
-  const [targetPrice, setTargetPrice] = useState(item ? item.pricePerTon : 3000);
-  const [destinationPort, setDestinationPort] = useState('Port of Houston, USA');
+  const defaultMoqKg = item ? (item.moq >= 10 ? item.moq * 50 : 500) : 500;
+  const inrRatePerTon = item ? (item.pricePerTon > 1000 ? Math.round(item.pricePerTon * 83) : Math.round(item.pricePerTon * 85)) : 42000;
+  const defaultPricePerKg = Math.max(1, Math.round(inrRatePerTon / 1000));
+
+  const [quantity, setQuantity] = useState(initialQuantity || defaultMoqKg);
+  const [targetPrice, setTargetPrice] = useState(defaultPricePerKg);
+  const [destinationPort, setDestinationPort] = useState('Bengaluru, Karnataka');
   const [incoterm, setIncoterm] = useState('CIF');
   const [notes, setNotes] = useState('');
   const [submitted, setSubmitted] = useState(false);
@@ -100,7 +104,7 @@ export const RFQModal: React.FC<RFQModalProps> = ({
                 <div className="flex-1 truncate">
                   <div className="font-semibold text-xs text-black truncate">{item.title}</div>
                   <div className="text-[11px] text-[#0284c7] font-semibold mt-0.5">
-                    ${item.pricePerTon.toLocaleString()} / MT • Yard: {item.supplier.name}
+                    ₹{defaultPricePerKg.toLocaleString('en-IN')} / kg • Yard: {item.supplier.name}
                   </div>
                 </div>
               </div>
@@ -109,13 +113,14 @@ export const RFQModal: React.FC<RFQModalProps> = ({
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="block text-xs font-semibold text-black mb-1.5">
-                  Required Quantity (MT)
+                  Required Quantity (kg)
                 </label>
                 <input
                   type="number"
                   value={quantity}
                   onChange={(e) => setQuantity(Number(e.target.value))}
-                  min={item ? item.moq : 1}
+                  min={defaultMoqKg}
+                  step={50}
                   className="w-full text-xs font-medium px-3.5 py-2.5 bg-neutral-50/70 border border-black/[0.1] rounded-xl focus:bg-white focus:border-[#38bdf8] focus:ring-4 focus:ring-[#38bdf8]/10 focus:outline-none transition-all"
                   required
                 />
@@ -123,12 +128,14 @@ export const RFQModal: React.FC<RFQModalProps> = ({
 
               <div>
                 <label className="block text-xs font-semibold text-black mb-1.5">
-                  Target Price ($ / MT)
+                  Target Price (₹ / kg)
                 </label>
                 <input
                   type="number"
                   value={targetPrice}
                   onChange={(e) => setTargetPrice(Number(e.target.value))}
+                  min={1}
+                  step={1}
                   className="w-full text-xs font-medium px-3.5 py-2.5 bg-neutral-50/70 border border-black/[0.1] rounded-xl focus:bg-white focus:border-[#38bdf8] focus:ring-4 focus:ring-[#38bdf8]/10 focus:outline-none transition-all"
                   required
                 />
@@ -138,12 +145,13 @@ export const RFQModal: React.FC<RFQModalProps> = ({
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="block text-xs font-semibold text-black mb-1.5">
-                  Destination Port
+                  Delivery Destination
                 </label>
                 <input
                   type="text"
                   value={destinationPort}
                   onChange={(e) => setDestinationPort(e.target.value)}
+                  placeholder="e.g. Bengaluru, Karnataka"
                   className="w-full text-xs font-medium px-3.5 py-2.5 bg-neutral-50/70 border border-black/[0.1] rounded-xl focus:bg-white focus:border-[#38bdf8] focus:ring-4 focus:ring-[#38bdf8]/10 focus:outline-none transition-all"
                   required
                 />

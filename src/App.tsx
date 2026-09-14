@@ -210,39 +210,45 @@ function MarketplaceContent() {
   const handleRFQSubmitSuccess = (submittedData?: any) => {
     if (submittedData) {
       const todayStr = new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', year: 'numeric' }).format(new Date());
-      const qty = submittedData.quantity || 5;
+      const qty = submittedData.quantity || 500;
       const itemTitle = submittedData.item?.title || 'Industrial Scrap Lot';
-      const itemGrade = submittedData.item?.grade || 'Grade A';
+      const itemGrade = submittedData.item?.grade || 'Industrial Grade';
       const orderId = `WM-ORD-${Math.floor(1000 + Math.random() * 9000)}`;
 
-      const pricePerTon = submittedData.targetPrice || submittedData.item?.pricePerTon || 1850;
-      const totalAmount = pricePerTon * qty;
+      const rawPrice = submittedData.targetPrice || submittedData.item?.pricePerTon || 550;
+      const inrPerTon = rawPrice > 1000 ? Math.round(rawPrice * 83) : Math.round(rawPrice * 85);
+      const pricePerKg = submittedData.targetPrice && submittedData.targetPrice < 1000
+        ? submittedData.targetPrice
+        : Math.max(1, Math.round(inrPerTon / 1000));
+      const totalAmount = pricePerKg * qty;
       const deliveryLoc = submittedData.destinationPort || 'Bengaluru, Karnataka';
 
       const newQuote: BuyerQuoteEnquiry = {
         id: `quote-${Date.now()}`,
         orderNumber: `WM-${Math.floor(1000 + Math.random() * 9000)}`,
-        requestTitle: `Requested: ${qty} tons ${itemTitle}, Grade ${itemGrade} · ${deliveryLoc.split(',')[0]} · ${todayStr}`,
+        requestTitle: `Requested: ${qty.toLocaleString('en-IN')} kg ${itemTitle} · ${deliveryLoc.split(',')[0]} · ${todayStr}`,
         materialName: itemTitle,
         grade: itemGrade,
-        quantityTons: qty,
+        quantityKg: qty,
+        quantityTons: qty / 1000,
         deliveryLocation: deliveryLoc,
         requestDate: todayStr,
         productImage: submittedData.item?.primaryImage || 'https://images.unsplash.com/photo-1504917599217-d4dc5ebe6122?auto=format&fit=crop&w=800&q=80',
         status: 'offer_ready',
         offer: {
-          pricePerTon: pricePerTon > 1000 ? Math.round(pricePerTon * 83) : 41500,
-          totalAmount: (pricePerTon > 1000 ? Math.round(pricePerTon * 83) : 41500) * qty,
+          pricePerKg: pricePerKg,
+          pricePerTon: pricePerKg * 1000,
+          totalAmount: totalAmount,
           deliveryWindow: '3–5 Business Days (Guaranteed Dispatch)',
           batchPhoto: submittedData.item?.primaryImage || 'https://images.unsplash.com/photo-1504917599217-d4dc5ebe6122?auto=format&fit=crop&w=1200&q=80',
           aiGradeReport: {
             purityScore: submittedData.item?.aiSpecs?.purityScore || 98.8,
-            spectrographicSummary: submittedData.item?.aiSpecs?.spectrographicSummary || '3D LiDAR laser scan + XRF elemental purity assay certified.',
-            densityRating: 'High-Density Bulk Charge (ISRI Compliant)',
+            spectrographicSummary: submittedData.item?.aiSpecs?.spectrographicSummary || 'LiDAR laser scan + digital assay verified.',
+            densityRating: 'High-Density Industrial Bulk Lot',
             verifiedDate: todayStr,
           },
-          supplierName: submittedData.item?.supplier?.name || 'Tata Steel Verified Partner Yard',
-          supplierOrigin: submittedData.item?.origin || 'Jamshedpur, India',
+          supplierName: submittedData.item?.supplier?.name || 'Verified Partner Yard',
+          supplierOrigin: submittedData.item?.origin || 'Bengaluru, India',
         },
         timeline: {
           quoteReceivedAt: `${todayStr}, 09:30 AM`,
@@ -254,7 +260,7 @@ function MarketplaceContent() {
           {
             id: 'init-1',
             sender: 'team',
-            text: `Hello! We've prepared and verified your graded quote for ${qty} tons of ${itemTitle}. Let us know if you need any adjustments or proceed to Confirm Order.`,
+            text: `Hello! We've prepared and verified your quote for ${qty.toLocaleString('en-IN')} kg of ${itemTitle}. Let us know if you need any adjustments or proceed to Confirm Order.`,
             timestamp: todayStr,
           },
         ],

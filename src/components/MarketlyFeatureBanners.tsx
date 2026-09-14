@@ -10,16 +10,16 @@ export const MarketlyFeatureBanners: React.FC<MarketlyFeatureBannersProps> = ({ 
     {
       id: 'ferrous',
       category: 'ferrous',
-      tag: '500+ Metric Tons',
+      tag: '500,000+ kg Ready Stock',
       title: 'Explore Ferrous & Heavy Melting Steel',
-      description: 'Direct yard pricing for HMS 1/2, shredded auto scrap, and steel plate with CIF maritime freight.',
+      description: 'Direct yard pricing for HMS 1/2, shredded auto scrap, and steel plate with direct mill transport.',
       image: 'https://images.unsplash.com/photo-1504917599217-d4dc5ebe6122?auto=format&fit=crop&w=600&q=80',
       badge: 'Direct Smelter Quota',
     },
     {
       id: 'non-ferrous',
       category: 'non-ferrous',
-      tag: '150+ Metric Tons',
+      tag: '150,000+ kg Ready Stock',
       title: 'Explore High-Purity Copper & Brass',
       description: 'Millberry 99.99%, birch/cliff copper, and brass honey lots with verified XRF spectrographic certificates.',
       image: 'https://images.unsplash.com/photo-1563245372-f21724e3856d?auto=format&fit=crop&w=600&q=80',
@@ -28,7 +28,7 @@ export const MarketlyFeatureBanners: React.FC<MarketlyFeatureBannersProps> = ({ 
     {
       id: 'battery-ewaste',
       category: 'battery',
-      tag: '80+ Metric Tons',
+      tag: '80,000+ kg Ready Stock',
       title: 'Explore Battery & Secondary Polymers',
       description: 'Drained lead-acid battery scrap, high-recovery telecom PCBs, and HDPE regrind with escrow compliance.',
       image: 'https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=600&q=80',

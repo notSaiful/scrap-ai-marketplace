@@ -644,11 +644,11 @@ export const AIAdvisorPage: React.FC<AIAdvisorPageProps> = ({
                                   {/* Price & MOQ */}
                                   <div className="mb-2">
                                     <div className="text-base sm:text-lg font-extrabold text-slate-900">
-                                      ${item.pricePerTon.toLocaleString()}{' '}
-                                      <span className="text-xs font-normal text-slate-500">/ ton</span>
+                                      ₹{Math.max(1, Math.round((item.pricePerTon * 83) / 1000)).toLocaleString('en-IN')}{' '}
+                                      <span className="text-xs font-normal text-slate-500">/ kg</span>
                                     </div>
                                     <div className="text-[11px] text-slate-500">
-                                      Min. order: {item.moq} {item.moqUnit} • {item.availableStock} {item.stockUnit} stock
+                                      Min. order: {(item.moq >= 10 ? item.moq * 50 : 500).toLocaleString('en-IN')} kg • {(item.availableStock * 1000).toLocaleString('en-IN')} kg stock
                                     </div>
                                   </div>
 

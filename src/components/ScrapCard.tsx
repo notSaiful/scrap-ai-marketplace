@@ -84,14 +84,14 @@ export const ScrapCard: React.FC<ScrapCardProps> = ({
               {item.title}
             </h3>
             <span className="text-base font-bold text-[#0f1115] shrink-0">
-              ${item.pricePerTon.toLocaleString()}
+              ₹{Math.max(1, Math.round((item.pricePerTon * 83) / 1000)).toLocaleString('en-IN')}
             </span>
           </div>
 
           {/* Row 2: Category & Unit */}
           <div className="flex items-center justify-between text-xs text-[#919eab] font-normal mb-2.5">
             <span className="truncate">{item.categoryName} • {item.origin.split(',')[0]}</span>
-            <span className="shrink-0 text-[11px] font-medium text-[#495057]">/ MT</span>
+            <span className="shrink-0 text-[11px] font-medium text-[#495057]">/ kg</span>
           </div>
 
           {/* Optional AI Match Reason Pill */}
@@ -105,10 +105,10 @@ export const ScrapCard: React.FC<ScrapCardProps> = ({
           {/* Row 3: MOQ and Stock tags */}
           <div className="flex items-center space-x-2 text-[11px] text-[#495057] mb-3">
             <span className="bg-[#f8f9fa] border border-black/[0.05] rounded-md px-2 py-0.5 font-medium">
-              Min: {item.moq} {item.moqUnit}
+              Min: {(item.moq >= 10 ? item.moq * 50 : 500).toLocaleString('en-IN')} kg
             </span>
             <span className="bg-emerald-50 text-emerald-800 border border-emerald-200/60 rounded-md px-2 py-0.5 font-medium">
-              Stock: {item.availableStock} MT
+              Stock: {(item.availableStock * 1000).toLocaleString('en-IN')} kg
             </span>
           </div>
         </div>

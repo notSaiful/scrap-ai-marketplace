@@ -34,10 +34,11 @@ export interface QuoteMessage {
 export interface BuyerQuoteEnquiry {
   id: string;
   orderNumber: string; // e.g. "WM-1042"
-  requestTitle: string; // e.g. "Requested: 5 tons Steel Scrap, Grade A · Bengaluru · Sep 13"
+  requestTitle: string; // e.g. "Requested: 500 kg Steel Scrap · Bengaluru · Sep 13"
   materialName: string; // e.g. "Steel Scrap"
   grade: 'Grade A' | 'Grade B' | 'Grade C' | string;
-  quantityTons: number;
+  quantityKg?: number;
+  quantityTons?: number;
   deliveryLocation: string; // e.g. "Bengaluru, Karnataka"
   requestDate: string; // e.g. "Sep 13, 2026"
   referencePhoto?: string;
@@ -49,7 +50,8 @@ export interface BuyerQuoteEnquiry {
 
   // Offer Details (Stage 2)
   offer?: {
-    pricePerTon: number; // e.g. 42000
+    pricePerKg?: number; // e.g. 42
+    pricePerTon?: number; // legacy e.g. 42000
     totalAmount: number;
     deliveryWindow: string; // e.g. "Sep 18 – Sep 21 (3-5 business days)"
     batchPhoto: string;
@@ -289,7 +291,7 @@ export const QuotesPage: React.FC<QuotesPageProps> = ({
                     <div>
                       {/* Format: "[Material] — [Quantity] · [Status pill] · [Date]" */}
                       <div className="text-sm sm:text-base font-bold text-[#0f1115] group-hover:text-[#0284c7] transition-colors">
-                        {q.materialName} — {q.quantityTons} tons
+                        {q.materialName} — {(q.quantityKg || (q.quantityTons ? q.quantityTons * 1000 : 500)).toLocaleString('en-IN')} kg
                       </div>
                       <div className="text-xs text-slate-500 mt-0.5">
                         Ref: <span className="font-mono text-slate-700">{q.orderNumber}</span> · {q.deliveryLocation} · {q.requestDate}
@@ -318,8 +320,9 @@ export const QuotesPage: React.FC<QuotesPageProps> = ({
   const isStageOfferOrHigher = activeQuote.status === 'offer_ready' || activeQuote.status === 'confirmed' || activeQuote.status === 'in_transit' || activeQuote.status === 'delivered';
   const isStageConfirmedOrHigher = activeQuote.status === 'confirmed' || activeQuote.status === 'in_transit' || activeQuote.status === 'delivered';
 
-  const unitPrice = activeQuote.offer?.pricePerTon || 41500;
-  const subtotal = unitPrice * activeQuote.quantityTons;
+  const activeQtyKg = activeQuote.quantityKg || (activeQuote.quantityTons ? activeQuote.quantityTons * 1000 : 500);
+  const unitPrice = activeQuote.offer?.pricePerKg || (activeQuote.offer?.pricePerTon ? Math.round(activeQuote.offer.pricePerTon / 1000) : 42);
+  const subtotal = activeQuote.offer?.totalAmount || (unitPrice * activeQtyKg);
   const gstEstimated = Math.round(subtotal * 0.18);
   const totalAmount = subtotal + gstEstimated;
 
@@ -473,7 +476,7 @@ export const QuotesPage: React.FC<QuotesPageProps> = ({
                   Original RFQ Specification
                 </span>
                 <span className="text-sm font-bold text-slate-900 mt-0.5 block">
-                  {activeQuote.quantityTons} MT {activeQuote.materialName} · {activeQuote.deliveryLocation}
+                  {activeQtyKg.toLocaleString('en-IN')} kg {activeQuote.materialName} · {activeQuote.deliveryLocation}
                 </span>
               </div>
               <span className="text-xs font-semibold text-slate-500 bg-slate-100 px-3 py-1 rounded-full">
@@ -544,10 +547,10 @@ export const QuotesPage: React.FC<QuotesPageProps> = ({
                           </div>
                         </td>
                         <td className="py-4 px-4 text-center font-bold text-slate-800">
-                          {activeQuote.quantityTons} MT
+                          {activeQtyKg.toLocaleString('en-IN')} kg
                         </td>
                         <td className="py-4 px-4 text-right font-medium text-slate-800">
-                          ₹{unitPrice.toLocaleString('en-IN')}/ton
+                          ₹{unitPrice.toLocaleString('en-IN')}/kg
                         </td>
                         <td className="py-4 px-5 text-right font-bold text-slate-900">
                           ₹{subtotal.toLocaleString('en-IN')}
@@ -582,7 +585,7 @@ export const QuotesPage: React.FC<QuotesPageProps> = ({
                   {/* Financial Breakdown Rows */}
                   <div className="max-w-xs ml-auto space-y-2 pt-3 border-t border-slate-200 text-xs">
                     <div className="flex justify-between text-slate-600">
-                      <span>Subtotal ({activeQuote.quantityTons} MT):</span>
+                      <span>Subtotal ({activeQtyKg.toLocaleString('en-IN')} kg):</span>
                       <span className="font-semibold text-slate-900">₹{subtotal.toLocaleString('en-IN')}</span>
                     </div>
                     <div className="flex justify-between text-slate-600">
@@ -650,7 +653,7 @@ export const QuotesPage: React.FC<QuotesPageProps> = ({
                   ₹{totalAmount.toLocaleString('en-IN')}
                 </div>
                 <span className="text-xs text-slate-500 block mt-0.5">
-                  For {activeQuote.quantityTons} MT {activeQuote.materialName}
+                  For {activeQtyKg.toLocaleString('en-IN')} kg {activeQuote.materialName}
                 </span>
               </div>
 

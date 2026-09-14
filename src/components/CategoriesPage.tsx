@@ -55,7 +55,7 @@ export const CategoriesPage: React.FC<CategoriesPageProps> = ({
 }) => {
   // Local Category Filter States
   const [categorySearch, setCategorySearch] = useState('');
-  const [maxPrice, setMaxPrice] = useState<number>(100000);
+  const [maxPrice, setMaxPrice] = useState<number>(800);
   const [selectedLocation, setSelectedLocation] = useState<string>('all');
   const [selectedQuantityRange, setSelectedQuantityRange] = useState<string>('all');
   const [mobileFilterOpen, setMobileFilterOpen] = useState(false);
@@ -63,7 +63,7 @@ export const CategoriesPage: React.FC<CategoriesPageProps> = ({
   const currentCategoryInfo = CATEGORIES.find(c => c.id === activeCategory) || CATEGORIES[0];
 
   const handleResetFilters = () => {
-    setMaxPrice(100000);
+    setMaxPrice(800);
     setSelectedLocation('all');
     setSelectedQuantityRange('all');
     setCategorySearch('');
@@ -90,9 +90,10 @@ export const CategoriesPage: React.FC<CategoriesPageProps> = ({
         if (!content.includes(query)) return false;
       }
 
-      // 2. Price slider (converted to INR estimate)
-      const inrPrice = item.pricePerTon > 1000 ? Math.round(item.pricePerTon * 83) : Math.round(item.pricePerTon * 85);
-      if (inrPrice > maxPrice) return false;
+      // 2. Price slider (converted to INR per kg estimate)
+      const inrRatePerTon = item.pricePerTon > 1000 ? Math.round(item.pricePerTon * 83) : Math.round(item.pricePerTon * 85);
+      const inrPricePerKg = Math.round(inrRatePerTon / 1000);
+      if (inrPricePerKg > maxPrice) return false;
 
       // 3. Delivery location
       if (selectedLocation !== 'all') {
@@ -105,12 +106,12 @@ export const CategoriesPage: React.FC<CategoriesPageProps> = ({
         if (selectedLocation === 'kolkata' && !locLower.includes('kolkata') && !locLower.includes('bengal') && !locLower.includes('east') && !locLower.includes('jamshedpur')) return false;
       }
 
-      // 4. Quantity Range
+      // 4. Quantity Range (MOQ in kg)
+      const moqKg = item.moq >= 10 ? item.moq * 50 : 500;
       if (selectedQuantityRange !== 'all') {
-        if (selectedQuantityRange === '<10' && item.moq > 10) return false;
-        if (selectedQuantityRange === '10-25' && (item.moq < 10 || item.moq > 25)) return false;
-        if (selectedQuantityRange === '25-50' && (item.moq < 25 || item.moq > 50)) return false;
-        if (selectedQuantityRange === '50+' && item.moq < 50) return false;
+        if (selectedQuantityRange === '<500' && moqKg >= 500) return false;
+        if (selectedQuantityRange === '500-2000' && (moqKg < 500 || moqKg > 2000)) return false;
+        if (selectedQuantityRange === '2000+' && moqKg < 2000) return false;
       }
 
       return true;
@@ -167,7 +168,7 @@ export const CategoriesPage: React.FC<CategoriesPageProps> = ({
               {activeCategory === 'all' ? 'Industrial Bulk Materials & Scrap Supply' : currentCategoryInfo.name}
             </h1>
             <p className="text-xs sm:text-sm text-slate-500 mt-1 max-w-2xl">
-              Dense wholesale inventory sourced directly from verified industrial suppliers and processors. Transparent per-ton pricing with escrow delivery protection.
+              Dense wholesale inventory sourced directly from verified industrial suppliers and processors. Transparent per-kg pricing with escrow delivery protection.
             </p>
           </div>
 
@@ -274,22 +275,22 @@ export const CategoriesPage: React.FC<CategoriesPageProps> = ({
                     Price Range (Max)
                   </label>
                   <span className="text-xs font-bold text-[#0ea5e9]">
-                    ₹{maxPrice.toLocaleString('en-IN')}/ton
+                    ₹{maxPrice.toLocaleString('en-IN')}/kg
                   </span>
                 </div>
                 <input
                   type="range"
-                  min={15000}
-                  max={100000}
-                  step={2000}
+                  min={10}
+                  max={800}
+                  step={10}
                   value={maxPrice}
                   onChange={(e) => setMaxPrice(Number(e.target.value))}
                   className="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-[#0ea5e9]"
                 />
                 <div className="flex justify-between text-[10px] text-slate-400 mt-1">
-                  <span>₹15,000</span>
-                  <span>₹50,000</span>
-                  <span>₹1,00,000</span>
+                  <span>₹10/kg</span>
+                  <span>₹400/kg</span>
+                  <span>₹800/kg</span>
                 </div>
               </div>
 
@@ -318,9 +319,9 @@ export const CategoriesPage: React.FC<CategoriesPageProps> = ({
                 <div className="grid grid-cols-2 gap-2">
                   {[
                     { id: 'all', label: 'All MOQs' },
-                    { id: '<10', label: '< 10 MT' },
-                    { id: '10-25', label: '10–25 MT' },
-                    { id: '50+', label: '50+ MT' },
+                    { id: '<500', label: '< 500 kg' },
+                    { id: '500-2000', label: '500–2,000 kg' },
+                    { id: '2000+', label: '2,000+ kg' },
                   ].map(qty => (
                     <button
                       key={qty.id}
@@ -417,9 +418,12 @@ export const CategoriesPage: React.FC<CategoriesPageProps> = ({
             {displayedItems.length > 0 ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-4.5">
                 {displayedItems.map((item) => {
-                  const inrRate = item.pricePerTon > 1000 ? Math.round(item.pricePerTon * 83) : Math.round(item.pricePerTon * 85);
-                  const minPrice = Math.round(inrRate * 0.95);
-                  const maxPrice = Math.round(inrRate * 1.05);
+                  const inrRatePerTon = item.pricePerTon > 1000 ? Math.round(item.pricePerTon * 83) : Math.round(item.pricePerTon * 85);
+                  const baseRatePerKg = Math.round(inrRatePerTon / 1000);
+                  const minPrice = Math.max(1, Math.round(baseRatePerKg * 0.95));
+                  const maxPrice = Math.max(1, Math.round(baseRatePerKg * 1.05));
+                  const moqKg = item.moq >= 10 ? item.moq * 50 : 500;
+                  const stockKg = item.availableStock * 1000;
 
                   return (
                     <div
@@ -454,7 +458,7 @@ export const CategoriesPage: React.FC<CategoriesPageProps> = ({
                           <div>
                             <div className="text-[15px] font-bold text-[#0f1115]">
                               ₹{minPrice.toLocaleString('en-IN')} – ₹{maxPrice.toLocaleString('en-IN')}
-                              <span className="text-[11px] font-normal text-slate-500"> / ton</span>
+                              <span className="text-[11px] font-normal text-slate-500"> / kg</span>
                             </div>
                             <div className="text-[10px] text-slate-400">
                               (indicative price)
@@ -464,10 +468,10 @@ export const CategoriesPage: React.FC<CategoriesPageProps> = ({
                           {/* MOQ Line */}
                           <div className="flex items-center justify-between text-xs pt-1 border-t border-slate-100 text-slate-600">
                             <span className="font-semibold text-slate-700">
-                              MOQ: {item.moq} tons
+                              MOQ: {moqKg.toLocaleString('en-IN')} kg
                             </span>
                             <span className="text-[11px] text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded font-medium">
-                              Stock: {item.availableStock} MT
+                              Stock: {stockKg.toLocaleString('en-IN')} kg
                             </span>
                           </div>
                         </div>
