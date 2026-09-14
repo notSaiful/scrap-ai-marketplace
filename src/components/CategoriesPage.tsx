@@ -146,11 +146,6 @@ export const CategoriesPage: React.FC<CategoriesPageProps> = ({
               </>
             )}
           </div>
-
-          <div className="hidden sm:flex items-center space-x-2 text-[11px] font-semibold text-[#0ea5e9] bg-sky-50 border border-sky-200 px-3.5 py-1 rounded-full">
-            <ShieldCheck className="w-3.5 h-3.5 text-[#0ea5e9]" />
-            <span>Alibaba B2B Verified Wholesale Catalog</span>
-          </div>
         </div>
 
         {/* Category Header Banner */}
