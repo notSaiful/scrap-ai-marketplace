@@ -132,14 +132,14 @@ export const QuotesPage: React.FC<QuotesPageProps> = ({
         );
       case 'confirmed':
         return (
-          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-[#0f1115] text-white">
+          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-[#0ea5e9] text-white shadow-2xs">
             Confirmed
           </span>
         );
       case 'in_transit':
         return (
-          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-[#0f1115] text-white">
-            <Truck className="w-3.5 h-3.5 mr-1 text-sky-400" />
+          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-[#0284c7] text-white shadow-2xs">
+            <Truck className="w-3.5 h-3.5 mr-1 text-white" />
             In Transit
           </span>
         );
@@ -667,8 +667,8 @@ export const QuotesPage: React.FC<QuotesPageProps> = ({
                   <ArrowRight className="w-4 h-4" />
                 </button>
               ) : isStageConfirmedOrHigher ? (
-                <div className="w-full bg-emerald-50 text-emerald-800 border border-emerald-200 rounded-xl py-3 px-4 text-center font-bold text-xs flex items-center justify-center gap-2">
-                  <Check className="w-4 h-4 text-emerald-600" />
+                <div className="w-full bg-[#0ea5e9] text-white rounded-xl py-3.5 px-4 text-center font-bold text-xs flex items-center justify-center gap-2 shadow-[0_4px_14px_rgba(14,165,233,0.3)]">
+                  <Check className="w-4 h-4 text-white" />
                   <span>Order Confirmed & Locked</span>
                 </div>
               ) : (
