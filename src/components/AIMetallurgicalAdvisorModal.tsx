@@ -14,6 +14,7 @@ import {
 
 import { SCRAP_ITEMS } from '../data/scrapData';
 import { queryOpenRouterRag } from '../services/openRouterService';
+import { FormattedMessage } from './FormattedMessage';
 
 interface AIMetallurgicalAdvisorModalProps {
   isOpen: boolean;
@@ -148,7 +149,11 @@ export const AIMetallurgicalAdvisorModal: React.FC<AIMetallurgicalAdvisorModalPr
                     : 'bg-white border border-black/[0.08] text-[#0f1115] shadow-2xs rounded-bl-xs'
                 }`}
               >
-                <div className="whitespace-pre-line font-normal">{msg.text}</div>
+                {msg.sender === 'user' ? (
+                  <div className="font-normal">{msg.text}</div>
+                ) : (
+                  <FormattedMessage content={msg.text} />
+                )}
 
                 {msg.tags && msg.tags.length > 0 && (
                   <div className="mt-3 pt-2.5 border-t border-black/[0.06] flex flex-wrap gap-1.5">

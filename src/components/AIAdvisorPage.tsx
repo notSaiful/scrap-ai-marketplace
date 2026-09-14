@@ -26,6 +26,7 @@ import {
 } from 'lucide-react';
 import { SCRAP_ITEMS } from '../data/scrapData';
 import { ScrapItem } from '../types/scrap';
+import { FormattedMessage } from './FormattedMessage';
 import {
   queryOpenRouterRag,
   getSavedOpenRouterKey,
@@ -213,8 +214,18 @@ export const AIAdvisorPage: React.FC<AIAdvisorPageProps> = ({
     setIsThinking(true);
 
     try {
-      // OpenRouter Auto Free query
-      const result = await queryOpenRouterRag(trimmed, SCRAP_ITEMS);
+      // Find current session history before this new user message
+      const currSession = sessions.find(s => s.id === targetSessionId);
+      const priorHistory = currSession ? currSession.messages.map(m => ({ role: m.role, text: m.text })) : [];
+
+      // OpenRouter Auto Free query with conversation context
+      const result = await queryOpenRouterRag(
+        trimmed,
+        SCRAP_ITEMS,
+        undefined,
+        undefined,
+        priorHistory
+      );
 
       const aiMsg: ChatMessage = {
         id: `msg-${Date.now()}-ai`,
@@ -540,9 +551,9 @@ export const AIAdvisorPage: React.FC<AIAdvisorPageProps> = ({
                       </div>
                     )}
 
-                    {/* Assistant Message Text */}
-                    <div className="text-xs sm:text-sm text-slate-800 leading-relaxed font-normal mb-4 ml-8 whitespace-pre-line">
-                      {msg.text}
+                    {/* Assistant Message Text Formatted like Claude */}
+                    <div className="ml-8 mb-4 max-w-3xl">
+                      <FormattedMessage content={msg.text} />
                     </div>
 
                     {/* Humble Note when no direct inventory match exists */}

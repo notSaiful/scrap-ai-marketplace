@@ -19,25 +19,25 @@ export const DEFAULT_OPENROUTER_API_KEY = _kParts.join('-');
 
 export const OPENROUTER_FREE_MODELS: OpenRouterModelConfig[] = [
   {
-    id: 'nvidia/nemotron-3.5-lightning:free',
-    name: 'Nemotron 3.5 Lightning (Free)',
-    provider: 'NVIDIA',
-    contextLength: '128k',
-    badge: 'Recommended • Ultra Fast',
+    id: 'liquid/lfm-2.5-2.6b:free',
+    name: 'Liquid LFM 2.5 2.6B (Free)',
+    provider: 'Liquid AI',
+    contextLength: '64k',
+    badge: 'Recommended • Fast & Precise',
   },
   {
     id: 'nex-agi/nex-n2.5-pro:free',
     name: 'Nex N2.5 Pro (Free)',
     provider: 'Nex AGI',
     contextLength: '64k',
-    badge: 'High Reasoning',
+    badge: 'Deep Reasoning',
   },
   {
-    id: 'meta-llama/llama-3.3-70b-instruct:free',
-    name: 'Llama 3.3 70B Instruct (Free)',
-    provider: 'Meta',
+    id: 'nvidia/nemotron-3.5-lightning:free',
+    name: 'Nemotron 3.5 Lightning (Free)',
+    provider: 'NVIDIA',
     contextLength: '128k',
-    badge: 'High Precision',
+    badge: 'Ultra Fast',
   },
   {
     id: 'google/gemma-4-31b-it:free',
@@ -47,18 +47,11 @@ export const OPENROUTER_FREE_MODELS: OpenRouterModelConfig[] = [
     badge: 'Deep Research',
   },
   {
-    id: 'deepseek/deepseek-r1:free',
-    name: 'DeepSeek R1 (Free)',
-    provider: 'DeepSeek',
-    contextLength: '64k',
-    badge: 'Reasoning',
-  },
-  {
-    id: 'nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free',
-    name: 'Nemotron 3 Reasoning (Free)',
-    provider: 'NVIDIA',
-    contextLength: '64k',
-    badge: 'Analytical',
+    id: 'meta-llama/llama-3.3-70b-instruct:free',
+    name: 'Llama 3.3 70B Instruct (Free)',
+    provider: 'Meta',
+    contextLength: '128k',
+    badge: 'High Precision',
   },
 ];
 
@@ -166,7 +159,8 @@ export async function queryOpenRouterRag(
   query: string,
   catalog: ScrapItem[],
   overrideModelId?: string,
-  overrideApiKey?: string
+  overrideApiKey?: string,
+  conversationHistory: { role: 'user' | 'assistant'; text: string }[] = []
 ): Promise<OpenRouterRagResult> {
   const startTime = performance.now();
   const apiKey = overrideApiKey || getSavedOpenRouterKey();
@@ -189,14 +183,38 @@ export async function queryOpenRouterRag(
 
   const candidateModels = [
     preferredModelId,
-    'nvidia/nemotron-3.5-lightning:free',
+    'liquid/lfm-2.5-2.6b:free',
     'nex-agi/nex-n2.5-pro:free',
-    'meta-llama/llama-3.3-70b-instruct:free',
+    'nvidia/nemotron-3.5-lightning:free',
     'google/gemma-4-31b-it:free',
-    'deepseek/deepseek-r1:free',
+    'meta-llama/llama-3.3-70b-instruct:free',
   ].filter((v, i, a) => a.indexOf(v) === i);
 
   let lastError = '';
+
+  const systemPrompt = `You are the senior Metallurgical Procurement & Scrap Sourcing Advisor at WasteMarket.
+
+Core Communication Principles (Claude Standard):
+1. **Clear, direct, and concise**: Avoid conversational fluff, preamble, or generic robotic disclaimers. Get straight to the answer.
+2. **Well-structured formatting**: Use clean markdown with clear section headings (##), bold highlights (**), and tight bullet points.
+3. **Metallurgical accuracy**: Provide real technical facts, ISRI scrap codes, induction/EAF furnace considerations, tramp element risks (Cu, Sn, P, S), and melt recovery rates.
+4. **Actionable recommendations**: If the user asks for advice or comparisons, give a decisive primary recommendation followed by secondary alternatives.
+5. **Next steps**: Conclude with 2-3 specific, actionable next steps or exploration suggestions for the buyer.
+
+Live WasteMarket Verified Inventory (Reference when relevant):
+${JSON.stringify(catalogContext, null, 2)}`;
+
+  // Build messages with recent conversation context
+  const recentHistory = conversationHistory.slice(-4).map(m => ({
+    role: m.role,
+    content: m.text,
+  }));
+
+  const messagesPayload = [
+    { role: 'system', content: systemPrompt },
+    ...recentHistory,
+    { role: 'user', content: query }
+  ];
 
   for (const modelId of candidateModels) {
     try {
@@ -209,31 +227,9 @@ export async function queryOpenRouterRag(
         },
         body: JSON.stringify({
           model: modelId,
-          messages: [
-            {
-              role: 'system',
-              content: `You are the WasteMarket AI Metallurgical & Scrap Sourcing Advisor for Indian and global induction furnaces, secondary smelters, and recyclers.
-
-Core Mission:
-Provide intelligent, deep, expert answers with real metallurgical data, furnace yield physics (IF/EAF), chemistry tolerances (Sulfur, Phosphorus, Moisture, Tramp elements), ISRI scrap specifications, and macroeconomic market dynamics.
-
-Formatting & Style Rules:
-1. Provide a direct, articulate, deeply researched answer in markdown.
-2. If discussing market demand, break down reasons with real metallurgical data (e.g. induction melting efficiency, decarbonization mandates, energy savings vs bauxite/ore).
-3. If discussing specific scrap grades, cite standard ISRI specs, certified purity, and chemical constraints.
-4. If relevant, compare with items from the live WasteMarket catalog provided below.
-5. End with 2-3 logical follow-up exploration questions for the buyer.
-
-Live WasteMarket Verified Inventory:
-${JSON.stringify(catalogContext, null, 2)}`,
-            },
-            {
-              role: 'user',
-              content: query,
-            },
-          ],
-          temperature: 0.4,
-          max_tokens: 1500,
+          messages: messagesPayload,
+          temperature: 0.3,
+          max_tokens: 1800,
         }),
       });
 
