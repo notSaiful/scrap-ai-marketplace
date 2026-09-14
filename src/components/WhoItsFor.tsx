@@ -32,7 +32,7 @@ export const WhoItsFor: React.FC<WhoItsForProps> = () => {
   ];
 
   return (
-    <section className="relative py-14 sm:py-20 bg-[#F7F8FA] border-y border-black/[0.06] overflow-hidden">
+    <section id="target-sectors" className="relative py-14 sm:py-20 bg-[#F7F8FA] border-y border-black/[0.06] overflow-hidden">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
         <div className="text-center max-w-3xl mx-auto mb-10 sm:mb-14">

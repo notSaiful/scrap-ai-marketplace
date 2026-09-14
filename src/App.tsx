@@ -477,7 +477,7 @@ function MarketplaceContent() {
             <TrustStrip />
 
             {/* Available Category Products Showcase (Directly below hero/trust strip) */}
-            <section className="py-14 sm:py-20 bg-[#F7F8FA] border-b border-black/[0.06]">
+            <section id="available-lots" className="py-14 sm:py-20 bg-[#F7F8FA] border-b border-black/[0.06]">
               <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 {/* Section Header */}
                 <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-8 sm:mb-10 gap-4">
@@ -517,7 +517,7 @@ function MarketplaceContent() {
             </section>
 
             {/* How It Works (3 steps) */}
-            <div id="categories">
+            <div id="how-it-works">
               <HowItWorks onOpenRFQ={() => handleOpenRFQ()} />
             </div>
 
@@ -592,6 +592,11 @@ function MarketplaceContent() {
           }}
           onOpenQuotes={handleOpenQuotesPage}
           onOpenContactUs={handleOpenContactUs}
+          onOpenRFQ={() => handleOpenRFQ()}
+          onOpenImageSearch={() => setImageSearchModalOpen(true)}
+          onOpenAuth={handleOpenAuth}
+          onOpenProfile={() => setProfileModalOpen(true)}
+          currentPage={currentPage}
         />
       )}
     </div>

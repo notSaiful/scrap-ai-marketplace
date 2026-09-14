@@ -42,7 +42,7 @@ export const WhatWeSource: React.FC<WhatWeSourceProps> = ({
   ];
 
   return (
-    <section className="relative py-16 sm:py-20 bg-white border-b border-black/[0.06] overflow-hidden">
+    <section id="materials" className="relative py-16 sm:py-20 bg-white border-b border-black/[0.06] overflow-hidden">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
         {/* Section Header */}

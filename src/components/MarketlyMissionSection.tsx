@@ -46,7 +46,7 @@ export const MarketlyMissionSection: React.FC<MarketlyMissionSectionProps> = ({
   ];
 
   return (
-    <section className="relative overflow-hidden py-16 sm:py-24 bg-gradient-to-b from-white via-slate-50/50 to-white border-y border-black/[0.05]">
+    <section id="why-us" className="relative overflow-hidden py-16 sm:py-24 bg-gradient-to-b from-white via-slate-50/50 to-white border-y border-black/[0.05]">
       {/* Background Decorative Ambient Glows */}
       <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[320px] bg-sky-100/40 rounded-full blur-3xl pointer-events-none -z-10" />
       <div className="absolute bottom-10 right-10 w-[400px] h-[240px] bg-blue-100/30 rounded-full blur-3xl pointer-events-none -z-10" />
